@@ -1,1 +1,1 @@
-GET localhost:8080/expenses?category=Food
+POST localhost:8080//expenses

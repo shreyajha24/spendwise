@@ -1,10 +1,8 @@
 package com.shreya.spendwise.Controller;
 
+import com.shreya.spendwise.entity.Expense;
 import com.shreya.spendwise.repository.ExpenseRepository;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 
 @RestController
@@ -24,5 +22,17 @@ public class ExpenseController {
             @RequestParam String category
     ){
         return "Category = " + category;
+    }
+    @GetMapping("/students")
+    public String getStudents(
+            @RequestParam String branch
+    ){
+        return "Branch = " + branch;
+    }
+    @PostMapping("/expenses")
+    public Expense addExpense(
+            @RequestBody Expense expenses
+    ){
+        return expenses;
     }
 }
