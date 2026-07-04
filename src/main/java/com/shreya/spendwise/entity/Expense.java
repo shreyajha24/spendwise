@@ -5,19 +5,19 @@ public class Expense {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    private String title;
+    private String category;
     private double amount;
     public Expense() {
     }
-    public Expense(String title, double amount) {
-        this.title = title;
+    public Expense(String category, double amount) {
+        this.category =category;
         this.amount = amount;
     }
     public Long getId() {
         return id;
     }
-    public String getTitle() {
-        return title;
+    public String getCategory() {
+        return category;
     }
     public double getAmount() {
         return amount;

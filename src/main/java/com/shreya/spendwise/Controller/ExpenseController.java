@@ -1,38 +1,43 @@
 package com.shreya.spendwise.Controller;
 
 import com.shreya.spendwise.entity.Expense;
-import com.shreya.spendwise.repository.ExpenseRepository;
+import com.shreya.spendwise.service.ExpenseService;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 
 @RestController
 public class ExpenseController {
-    private final ExpenseRepository expenseRepository;
-    public ExpenseController(ExpenseRepository expenseRepository) {
-        this.expenseRepository = expenseRepository;
+    private final ExpenseService expenseService;
+
+    public ExpenseController(ExpenseService expenseService) {
+        this.expenseService = expenseService;
     }
+
     @GetMapping("/expenses/{id}")
-    public String getExpenses(
-            @PathVariable Long id
-    ){
-        return "Expense Id = "+id;
+    public ResponseEntity<Expense> getExpenseById(@PathVariable Long id) {
+        return expenseService.getExpenseById(id)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
     }
+
     @GetMapping("/expenses")
-    public String getExpenseByCategory(
-            @RequestParam String category
-    ){
-        return "Category = " + category;
+    public List<Expense> getExpenses(
+            @RequestParam(required = false) String category
+    ) {
+        if (category != null) {
+            return expenseService.getExpensesByCategory(category);
+        }
+
+        return expenseService.getAllExpenses();
     }
-    @GetMapping("/students")
-    public String getStudents(
-            @RequestParam String branch
-    ){
-        return "Branch = " + branch;
-    }
+
     @PostMapping("/expenses")
     public Expense addExpense(
             @RequestBody Expense expenses
     ){
-        return expenses;
+        return expenseService.saveExpense(expenses);
     }
 }

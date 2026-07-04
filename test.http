@@ -1,1 +1,7 @@
-POST localhost:8080//expenses
+POST http://localhost:8080/expenses
+Content-Type: application/json
+
+{
+"category":"Food",
+"amount":250.0
+}
