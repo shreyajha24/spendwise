@@ -1,11 +1,11 @@
 package com.shreya.spendwise.service;
 
 import com.shreya.spendwise.entity.Expense;
+import com.shreya.spendwise.exception.ExpenseNotFoundException;
 import com.shreya.spendwise.repository.ExpenseRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.Optional;
 
 @Service
 public class ExpenseService {
@@ -23,8 +23,9 @@ public class ExpenseService {
         return expenseRepository.findAll();
     }
 
-    public Optional<Expense> getExpenseById(Long id) {
-        return expenseRepository.findById(id);
+    public Expense getExpenseById(Long id) {
+        return expenseRepository.findById(id)
+                .orElseThrow(() -> new ExpenseNotFoundException(id));
     }
 
     public List<Expense> getExpensesByCategory(String category) {
