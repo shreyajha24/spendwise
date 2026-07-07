@@ -1,7 +1,2 @@
-POST http://localhost:8080/expenses
-Content-Type: application/json
+GET http://localhost:8080/expenses/100
 
-{
-"category":"Food",
-"amount":250.0
-}
