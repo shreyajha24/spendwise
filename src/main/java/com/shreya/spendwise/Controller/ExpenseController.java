@@ -2,6 +2,7 @@ package com.shreya.spendwise.Controller;
 
 import com.shreya.spendwise.entity.Expense;
 import com.shreya.spendwise.service.ExpenseService;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -36,7 +37,7 @@ public class ExpenseController {
 
     @PostMapping("/expenses")
     public Expense addExpense(
-            @RequestBody Expense expenses
+            @Valid @RequestBody Expense expenses
     ){
         return expenseService.saveExpense(expenses);
     }
