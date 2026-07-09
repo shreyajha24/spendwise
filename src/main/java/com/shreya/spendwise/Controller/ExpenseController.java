@@ -1,6 +1,7 @@
 package com.shreya.spendwise.Controller;
 
-import com.shreya.spendwise.entity.Expense;
+import com.shreya.spendwise.dto.ExpenseRequest;
+import com.shreya.spendwise.dto.ExpenseResponse;
 import com.shreya.spendwise.service.ExpenseService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
@@ -18,14 +19,14 @@ public class ExpenseController {
     }
 
     @GetMapping("/expenses/{id}")
-    public ResponseEntity<Expense> getExpenseById(@PathVariable Long id) {
+    public ResponseEntity<ExpenseResponse> getExpenseById(@PathVariable Long id) {
         return ResponseEntity.ok(
                 expenseService.getExpenseById(id)
         );
     }
 
     @GetMapping("/expenses")
-    public List<Expense> getExpenses(
+    public List<ExpenseResponse> getExpenses(
             @RequestParam(required = false) String category
     ) {
         if (category != null) {
@@ -36,9 +37,9 @@ public class ExpenseController {
     }
 
     @PostMapping("/expenses")
-    public Expense addExpense(
-            @Valid @RequestBody Expense expenses
-    ){
-        return expenseService.saveExpense(expenses);
+    public ExpenseResponse addExpense(
+            @Valid @RequestBody ExpenseRequest request) {
+
+        return expenseService.saveExpense(request);
     }
 }

@@ -1,35 +1,16 @@
-package com.shreya.spendwise.entity;
-
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Positive;
-import jakarta.validation.constraints.Size;
-import jakarta.persistence.*;
+package com.shreya.spendwise.dto;
 
 import java.time.LocalDate;
 
-@Entity
-public class Expense {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+public class ExpenseResponse {
     private Long id;
-
-    @NotBlank(message = "Category is required.")
-    private String category;
-
-    @NotNull(message = "Date is required.")
-    private LocalDate date;
-
-    @Positive(message = "Amount must be greater than zero.")
     private Double amount;
-
-    @Size(max = 200)
+    private String category;
+    private LocalDate date;
     private String note;
 
-    public Expense() {
-    }
-
-    public Expense( Double amount, String category, LocalDate date, String note) {
+    public ExpenseResponse(Long id, Double amount, String category, LocalDate date, String note) {
+        this.id = id;
         this.amount = amount;
         this.category = category;
         this.date = date;
@@ -40,6 +21,9 @@ public class Expense {
         return id;
     }
 
+    public void setId(Long id) {
+        this.id = id;
+    }
 
     public Double getAmount() {
         return amount;
