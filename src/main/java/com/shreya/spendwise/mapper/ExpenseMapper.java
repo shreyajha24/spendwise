@@ -1,0 +1,29 @@
+package com.shreya.spendwise.mapper;
+
+import com.shreya.spendwise.dto.ExpenseRequest;
+import com.shreya.spendwise.dto.ExpenseResponse;
+import com.shreya.spendwise.entity.Expense;
+import org.springframework.stereotype.Component;
+
+@Component
+public class ExpenseMapper {
+
+    public Expense toEntity(ExpenseRequest request) {
+        return new Expense(
+                request.getAmount(),
+                request.getCategory(),
+                request.getDate(),
+                request.getNote()
+        );
+    }
+
+    public ExpenseResponse toResponse(Expense expense) {
+        return new ExpenseResponse(
+                expense.getId(),
+                expense.getAmount(),
+                expense.getCategory(),
+                expense.getDate(),
+                expense.getNote()
+        );
+    }
+}
