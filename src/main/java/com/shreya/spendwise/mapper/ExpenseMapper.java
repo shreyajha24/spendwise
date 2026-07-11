@@ -26,4 +26,10 @@ public class ExpenseMapper {
                 expense.getNote()
         );
     }
+    public void updateEntity(ExpenseRequest request, Expense expense) {
+        expense.setAmount(request.getAmount());
+        expense.setCategory(request.getCategory());
+        expense.setDate(request.getDate());
+        expense.setNote(request.getNote());
+    }
 }

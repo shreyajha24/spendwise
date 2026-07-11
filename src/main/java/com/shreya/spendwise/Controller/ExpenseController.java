@@ -42,4 +42,13 @@ public class ExpenseController {
 
         return expenseService.saveExpense(request);
     }
+
+    @PutMapping("/expenses/{id}")
+    public ResponseEntity<ExpenseResponse> updateExpense(
+            @PathVariable Long id,
+            @Valid @RequestBody ExpenseRequest request) {
+        return ResponseEntity.ok(
+                expenseService.updateExpense(id, request)
+        );
+    }
 }

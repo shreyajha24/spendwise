@@ -44,4 +44,12 @@ public class ExpenseService {
                 .map(expenseMapper::toResponse)
                 .collect(Collectors.toList());
     }
+
+    public ExpenseResponse updateExpense(Long id, ExpenseRequest request) {
+        Expense expense = expenseRepository.findById(id)
+                .orElseThrow(() -> new ExpenseNotFoundException(id));
+        expenseMapper.updateEntity(request, expense);
+        Expense updatedExpense = expenseRepository.save(expense);
+        return expenseMapper.toResponse(updatedExpense);
+    }
 }
