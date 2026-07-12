@@ -1,9 +1,5 @@
 package com.shreya.spendwise.entity;
 
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Positive;
-import jakarta.validation.constraints.Size;
 import jakarta.persistence.*;
 
 import java.time.LocalDate;
@@ -14,17 +10,18 @@ public class Expense {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @NotBlank(message = "Category is required.")
     private String category;
 
-    @NotNull(message = "Date is required.")
     private LocalDate date;
 
-    @Positive(message = "Amount must be greater than zero.")
     private Double amount;
 
-    @Size(max = 200)
+    @Column(length = 200)
     private String note;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
 
     public Expense() {
     }
@@ -71,5 +68,13 @@ public class Expense {
 
     public void setNote(String note) {
         this.note = note;
+    }
+
+    public User getUser() {
+        return user;
+    }
+
+    public void setUser(User user) {
+        this.user = user;
     }
 }

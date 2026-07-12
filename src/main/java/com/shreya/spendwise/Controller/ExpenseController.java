@@ -29,11 +29,7 @@ public class ExpenseController {
     public List<ExpenseResponse> getExpenses(
             @RequestParam(required = false) String category
     ) {
-        if (category != null) {
-            return expenseService.getExpensesByCategory(category);
-        }
-
-        return expenseService.getAllExpenses();
+        return expenseService.getExpenses(category);
     }
 
     @PostMapping("/expenses")
@@ -50,5 +46,11 @@ public class ExpenseController {
         return ResponseEntity.ok(
                 expenseService.updateExpense(id, request)
         );
+    }
+
+    @DeleteMapping("/expenses/{id}")
+    public ResponseEntity<Void> deleteExpense(@PathVariable Long id) {
+        expenseService.deleteExpense(id);
+        return ResponseEntity.noContent().build();
     }
 }

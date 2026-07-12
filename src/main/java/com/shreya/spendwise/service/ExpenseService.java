@@ -27,6 +27,13 @@ public class ExpenseService {
         return expenseMapper.toResponse(savedExpense);
     }
 
+    public List<ExpenseResponse> getExpenses(String category) {
+        if (category != null && !category.isBlank()) {
+            return getExpensesByCategory(category);
+        }
+        return getAllExpenses();
+    }
+
     public List<ExpenseResponse> getAllExpenses() {
         return expenseRepository.findAll().stream()
                 .map(expenseMapper::toResponse)
@@ -34,9 +41,7 @@ public class ExpenseService {
     }
 
     public ExpenseResponse getExpenseById(Long id) {
-        Expense expense = expenseRepository.findById(id)
-                .orElseThrow(() -> new ExpenseNotFoundException(id));
-        return expenseMapper.toResponse(expense);
+        return expenseMapper.toResponse(findExpenseById(id));
     }
 
     public List<ExpenseResponse> getExpensesByCategory(String category) {
@@ -46,10 +51,19 @@ public class ExpenseService {
     }
 
     public ExpenseResponse updateExpense(Long id, ExpenseRequest request) {
-        Expense expense = expenseRepository.findById(id)
-                .orElseThrow(() -> new ExpenseNotFoundException(id));
+        Expense expense = findExpenseById(id);
         expenseMapper.updateEntity(request, expense);
         Expense updatedExpense = expenseRepository.save(expense);
         return expenseMapper.toResponse(updatedExpense);
+    }
+
+    public void deleteExpense(Long id) {
+        Expense expense = findExpenseById(id);
+        expenseRepository.delete(expense);
+    }
+
+    private Expense findExpenseById(Long id) {
+        return expenseRepository.findById(id)
+                .orElseThrow(() -> new ExpenseNotFoundException(id));
     }
 }
