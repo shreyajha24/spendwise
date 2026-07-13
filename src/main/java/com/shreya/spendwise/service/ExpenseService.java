@@ -9,8 +9,6 @@ import com.shreya.spendwise.repository.ExpenseRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.stream.Collectors;
-
 @Service
 public class ExpenseService {
     private final ExpenseRepository expenseRepository;
@@ -21,7 +19,7 @@ public class ExpenseService {
         this.expenseMapper = expenseMapper;
     }
 
-    public ExpenseResponse saveExpense(ExpenseRequest request) {
+    public ExpenseResponse createExpense(ExpenseRequest request) {
         Expense expense = expenseMapper.toEntity(request);
         Expense savedExpense = expenseRepository.save(expense);
         return expenseMapper.toResponse(savedExpense);
@@ -37,7 +35,7 @@ public class ExpenseService {
     public List<ExpenseResponse> getAllExpenses() {
         return expenseRepository.findAll().stream()
                 .map(expenseMapper::toResponse)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     public ExpenseResponse getExpenseById(Long id) {
@@ -47,7 +45,7 @@ public class ExpenseService {
     public List<ExpenseResponse> getExpensesByCategory(String category) {
         return expenseRepository.findByCategory(category).stream()
                 .map(expenseMapper::toResponse)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     public ExpenseResponse updateExpense(Long id, ExpenseRequest request) {

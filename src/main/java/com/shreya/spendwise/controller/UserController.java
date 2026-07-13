@@ -1,4 +1,4 @@
-package com.shreya.spendwise.Controller;
+package com.shreya.spendwise.controller;
 
 import com.shreya.spendwise.dto.UserRequest;
 import com.shreya.spendwise.dto.UserResponse;

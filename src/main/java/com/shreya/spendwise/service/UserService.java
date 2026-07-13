@@ -11,8 +11,6 @@ import com.shreya.spendwise.repository.UserRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.stream.Collectors;
-
 @Service
 public class UserService {
 
@@ -37,7 +35,7 @@ public class UserService {
     public List<UserResponse> getAllUsers() {
         return userRepository.findAll().stream()
                 .map(userMapper::toResponse)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     public UserResponse getUserById(Long id) {
