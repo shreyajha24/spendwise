@@ -26,7 +26,7 @@ public class UserService {
         this.userMapper = userMapper;
     }
 
-    public UserResponse saveUser(UserRequest request) {
+    public UserResponse createUser(UserRequest request) {
         User user = userMapper.toEntity(request);
         User savedUser = userRepository.save(user);
         return userMapper.toResponse(savedUser);
@@ -51,7 +51,7 @@ public class UserService {
 
     public void deleteUser(Long id) {
         User user = findUserById(id);
-        if (expenseRepository.existsByUser_Id(id)) {
+        if (expenseRepository.existsByUser_Id(user.getId())) {
             throw new UserHasExpensesException(id);
         }
         userRepository.delete(user);
