@@ -3,8 +3,10 @@ package com.shreya.spendwise.service;
 import com.shreya.spendwise.dto.UserRequest;
 import com.shreya.spendwise.dto.UserResponse;
 import com.shreya.spendwise.entity.User;
+import com.shreya.spendwise.exception.EmailAlreadyExistsException;
 import com.shreya.spendwise.exception.UserHasExpensesException;
 import com.shreya.spendwise.exception.UserNotFoundException;
+import com.shreya.spendwise.exception.UsernameAlreadyExistsException;
 import com.shreya.spendwise.mapper.UserMapper;
 import com.shreya.spendwise.repository.ExpenseRepository;
 import com.shreya.spendwise.repository.UserRepository;
@@ -27,6 +29,12 @@ public class UserService {
     }
 
     public UserResponse createUser(UserRequest request) {
+        if (userRepository.existsByUsername(request.getUsername())) {
+            throw new UsernameAlreadyExistsException(request.getUsername());
+        }
+        if (userRepository.existsByEmail(request.getEmail())) {
+            throw new EmailAlreadyExistsException(request.getEmail());
+        }
         User user = userMapper.toEntity(request);
         User savedUser = userRepository.save(user);
         return userMapper.toResponse(savedUser);
@@ -44,6 +52,21 @@ public class UserService {
 
     public UserResponse updateUser(Long id, UserRequest request) {
         User user = findUserById(id);
+        
+        // Check for duplicate username only if it has changed
+        if (!user.getUsername().equals(request.getUsername())) {
+            if (userRepository.existsByUsername(request.getUsername())) {
+                throw new UsernameAlreadyExistsException(request.getUsername());
+            }
+        }
+        
+        // Check for duplicate email only if it has changed
+        if (!user.getEmail().equals(request.getEmail())) {
+            if (userRepository.existsByEmail(request.getEmail())) {
+                throw new EmailAlreadyExistsException(request.getEmail());
+            }
+        }
+        
         userMapper.updateEntity(request, user);
         User updatedUser = userRepository.save(user);
         return userMapper.toResponse(updatedUser);
