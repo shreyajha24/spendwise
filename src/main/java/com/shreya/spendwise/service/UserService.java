@@ -53,18 +53,12 @@ public class UserService {
     public UserResponse updateUser(Long id, UserRequest request) {
         User user = findUserById(id);
         
-        // Check for duplicate username only if it has changed
-        if (!user.getUsername().equals(request.getUsername())) {
-            if (userRepository.existsByUsername(request.getUsername())) {
-                throw new UsernameAlreadyExistsException(request.getUsername());
-            }
+        if (userRepository.existsByUsernameAndIdNot(request.getUsername(), id)) {
+            throw new UsernameAlreadyExistsException(request.getUsername());
         }
         
-        // Check for duplicate email only if it has changed
-        if (!user.getEmail().equals(request.getEmail())) {
-            if (userRepository.existsByEmail(request.getEmail())) {
-                throw new EmailAlreadyExistsException(request.getEmail());
-            }
+        if (userRepository.existsByEmailAndIdNot(request.getEmail(), id)) {
+            throw new EmailAlreadyExistsException(request.getEmail());
         }
         
         userMapper.updateEntity(request, user);
@@ -74,7 +68,7 @@ public class UserService {
 
     public void deleteUser(Long id) {
         User user = findUserById(id);
-        if (expenseRepository.existsByUser_Id(user.getId())) {
+        if (expenseRepository.existsByUser_Id(id)) {
             throw new UserHasExpensesException(id);
         }
         userRepository.delete(user);
