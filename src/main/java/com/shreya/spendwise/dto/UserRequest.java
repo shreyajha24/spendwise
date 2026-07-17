@@ -2,6 +2,7 @@ package com.shreya.spendwise.dto;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 
 public class UserRequest {
 
@@ -13,6 +14,7 @@ public class UserRequest {
     private String email;
 
     @NotBlank(message = "Password is required.")
+    @Size(min = 8, message = "Password must be at least 8 characters.")
     private String password;
 
     public String getUsername() {
