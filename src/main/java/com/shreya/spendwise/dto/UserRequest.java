@@ -12,6 +12,9 @@ public class UserRequest {
     @Email(message = "Email must be valid.")
     private String email;
 
+    @NotBlank(message = "Password is required.")
+    private String password;
+
     public String getUsername() {
         return username;
     }
@@ -26,5 +29,13 @@ public class UserRequest {
 
     public void setEmail(String email) {
         this.email = email;
+    }
+
+    public String getPassword() {
+        return password;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
     }
 }

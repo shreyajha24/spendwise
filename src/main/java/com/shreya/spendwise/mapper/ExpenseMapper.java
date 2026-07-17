@@ -3,6 +3,7 @@ package com.shreya.spendwise.mapper;
 import com.shreya.spendwise.dto.ExpenseRequest;
 import com.shreya.spendwise.dto.ExpenseResponse;
 import com.shreya.spendwise.entity.Expense;
+import com.shreya.spendwise.entity.User;
 import org.springframework.stereotype.Component;
 
 @Component

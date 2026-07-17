@@ -10,6 +10,7 @@ import com.shreya.spendwise.exception.UsernameAlreadyExistsException;
 import com.shreya.spendwise.mapper.UserMapper;
 import com.shreya.spendwise.repository.ExpenseRepository;
 import com.shreya.spendwise.repository.UserRepository;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -19,13 +20,16 @@ public class UserService {
     private final UserRepository userRepository;
     private final ExpenseRepository expenseRepository;
     private final UserMapper userMapper;
+    private final PasswordEncoder passwordEncoder;
 
     public UserService(UserRepository userRepository,
                        ExpenseRepository expenseRepository,
-                       UserMapper userMapper) {
+                       UserMapper userMapper,
+                       PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
         this.expenseRepository = expenseRepository;
         this.userMapper = userMapper;
+        this.passwordEncoder = passwordEncoder;
     }
 
     public UserResponse createUser(UserRequest request) {
@@ -36,6 +40,7 @@ public class UserService {
             throw new EmailAlreadyExistsException(request.getEmail());
         }
         User user = userMapper.toEntity(request);
+        user.setPassword(passwordEncoder.encode(request.getPassword()));
         User savedUser = userRepository.save(user);
         return userMapper.toResponse(savedUser);
     }
