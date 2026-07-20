@@ -1,6 +1,5 @@
 package com.shreya.spendwise.config;
 
-import com.shreya.spendwise.security.CustomUserDetailsService;
 import com.shreya.spendwise.security.JwtAuthenticationFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -31,7 +30,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/auth/**", "/users").permitAll()
                         .requestMatchers("/expenses/**").authenticated()
-                        .anyRequest().permitAll()
+                        .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
