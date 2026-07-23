@@ -6,6 +6,7 @@ import com.shreya.spendwise.dto.UserRequest;
 import com.shreya.spendwise.dto.UserResponse;
 import com.shreya.spendwise.entity.User;
 import com.shreya.spendwise.exception.EmailAlreadyExistsException;
+import com.shreya.spendwise.exception.UsernameAlreadyExistsException;
 import com.shreya.spendwise.repository.UserRepository;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -33,22 +34,20 @@ public class AuthenticationService {
     }
 
     public UserResponse register(UserRequest request) {
-
-        // Check if email already exists
+        if (userRepository.existsByUsername(request.getUsername())) {
+            throw new UsernameAlreadyExistsException(request.getUsername());
+        }
         if (userRepository.findByEmail(request.getEmail()).isPresent()) {
-            throw new EmailAlreadyExistsException("Email already exists.");
+            throw new EmailAlreadyExistsException(request.getEmail());
         }
 
-        // Create User entity
         User user = new User();
         user.setUsername(request.getUsername());
         user.setEmail(request.getEmail());
         user.setPassword(passwordEncoder.encode(request.getPassword()));
 
-        // Save user
         User savedUser = userRepository.save(user);
 
-        // Return response
         return new UserResponse(
                 savedUser.getId(),
                 savedUser.getUsername(),

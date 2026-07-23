@@ -9,13 +9,14 @@ import org.springframework.stereotype.Component;
 @Component
 public class ExpenseMapper {
 
-    public Expense toEntity(ExpenseRequest request) {
-        return new Expense(
-                request.getAmount(),
-                request.getCategory(),
-                request.getDate(),
-                request.getNote()
-        );
+    public Expense toEntity(ExpenseRequest request, User user) {
+        Expense expense = new Expense();
+        expense.setAmount(request.getAmount());
+        expense.setCategory(request.getCategory());
+        expense.setDate(request.getDate());
+        expense.setNote(request.getNote());
+        expense.setUser(user);
+        return expense;
     }
 
     public ExpenseResponse toResponse(Expense expense) {
