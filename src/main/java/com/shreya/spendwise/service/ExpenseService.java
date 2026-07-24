@@ -7,7 +7,9 @@ import com.shreya.spendwise.entity.User;
 import com.shreya.spendwise.exception.ExpenseNotFoundException;
 import com.shreya.spendwise.mapper.ExpenseMapper;
 import com.shreya.spendwise.repository.ExpenseRepository;
-import com.shreya.spendwise.security.SecurityUtils;
+import com.shreya.spendwise.security.CustomUserDetails;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -15,40 +17,39 @@ import java.util.List;
 public class ExpenseService {
     private final ExpenseRepository expenseRepository;
     private final ExpenseMapper expenseMapper;
-    private final SecurityUtils securityUtils;
 
     public ExpenseService(
             ExpenseRepository expenseRepository,
-            ExpenseMapper expenseMapper,
-            SecurityUtils securityUtils) {
+            ExpenseMapper expenseMapper) {
         this.expenseRepository = expenseRepository;
         this.expenseMapper = expenseMapper;
-        this.securityUtils = securityUtils;
     }
 
     public ExpenseResponse createExpense(ExpenseRequest request) {
-        User currentUser = securityUtils.getCurrentUser();
-        Expense expense = expenseMapper.toEntity(request, currentUser);
+        User currentUser = getCurrentUser();
+        Expense expense = expenseMapper.toEntity(request);
+        expense.setUser(currentUser);
         Expense savedExpense = expenseRepository.save(expense);
         return expenseMapper.toResponse(savedExpense);
     }
 
     public List<ExpenseResponse> getExpenses(String category) {
-        Long currentUserId = securityUtils.getCurrentUser().getId();
+        User currentUser = getCurrentUser();
         if (category != null && !category.isBlank()) {
-            return getExpensesByCategory(currentUserId, category);
+            return getExpensesByCategory(currentUser.getId(), category);
         }
-        return getAllExpenses(currentUserId);
+        return getAllExpenses();
     }
 
-    public List<ExpenseResponse> getAllExpenses(Long userId) {
-        return expenseRepository.findByUser_Id(userId).stream()
+    public List<ExpenseResponse> getAllExpenses() {
+        User currentUser = getCurrentUser();
+        return expenseRepository.findByUser(currentUser).stream()
                 .map(expenseMapper::toResponse)
                 .toList();
     }
 
     public ExpenseResponse getExpenseById(Long id) {
-        Long currentUserId = securityUtils.getCurrentUser().getId();
+        Long currentUserId = getCurrentUser().getId();
         return expenseMapper.toResponse(findExpenseById(id, currentUserId));
     }
 
@@ -59,7 +60,7 @@ public class ExpenseService {
     }
 
     public ExpenseResponse updateExpense(Long id, ExpenseRequest request) {
-        Long currentUserId = securityUtils.getCurrentUser().getId();
+        Long currentUserId = getCurrentUser().getId();
         Expense expense = findExpenseById(id, currentUserId);
         expenseMapper.updateEntity(request, expense);
         Expense updatedExpense = expenseRepository.save(expense);
@@ -67,7 +68,7 @@ public class ExpenseService {
     }
 
     public void deleteExpense(Long id) {
-        Long currentUserId = securityUtils.getCurrentUser().getId();
+        Long currentUserId = getCurrentUser().getId();
         Expense expense = findExpenseById(id, currentUserId);
         expenseRepository.delete(expense);
     }
@@ -76,4 +77,14 @@ public class ExpenseService {
         return expenseRepository.findByIdAndUser_Id(id, userId)
                 .orElseThrow(() -> new ExpenseNotFoundException(id));
     }
+
+    private User getCurrentUser() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        Object principal = authentication.getPrincipal();
+        if (principal instanceof CustomUserDetails userDetails) {
+            return userDetails.getUser();
+        }
+        throw new IllegalStateException("No authenticated user found");
+    }
+
 }

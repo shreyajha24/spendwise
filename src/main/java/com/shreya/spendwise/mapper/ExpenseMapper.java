@@ -3,19 +3,17 @@ package com.shreya.spendwise.mapper;
 import com.shreya.spendwise.dto.ExpenseRequest;
 import com.shreya.spendwise.dto.ExpenseResponse;
 import com.shreya.spendwise.entity.Expense;
-import com.shreya.spendwise.entity.User;
 import org.springframework.stereotype.Component;
 
 @Component
 public class ExpenseMapper {
 
-    public Expense toEntity(ExpenseRequest request, User user) {
+    public Expense toEntity(ExpenseRequest request) {
         Expense expense = new Expense();
         expense.setAmount(request.getAmount());
         expense.setCategory(request.getCategory());
         expense.setDate(request.getDate());
         expense.setNote(request.getNote());
-        expense.setUser(user);
         return expense;
     }
 
