@@ -1,5 +1,6 @@
 package com.shreya.spendwise.service;
 
+import com.shreya.spendwise.entity.Category;
 import com.shreya.spendwise.dto.ExpenseRequest;
 import com.shreya.spendwise.dto.ExpenseResponse;
 import com.shreya.spendwise.entity.Expense;
@@ -33,9 +34,9 @@ public class ExpenseService {
         return expenseMapper.toResponse(savedExpense);
     }
 
-    public List<ExpenseResponse> getExpenses(String category) {
+    public List<ExpenseResponse> getExpenses(Category category) {
         User currentUser = getCurrentUser();
-        if (category != null && !category.isBlank()) {
+        if (category != null) {
             return getExpensesByCategory(currentUser.getId(), category);
         }
         return getAllExpenses();
@@ -53,7 +54,7 @@ public class ExpenseService {
         return expenseMapper.toResponse(findExpenseById(id, currentUserId));
     }
 
-    public List<ExpenseResponse> getExpensesByCategory(Long userId, String category) {
+    public List<ExpenseResponse> getExpensesByCategory(Long userId, Category category) {
         return expenseRepository.findByUser_IdAndCategory(userId, category).stream()
                 .map(expenseMapper::toResponse)
                 .toList();

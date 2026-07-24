@@ -2,6 +2,7 @@ package com.shreya.spendwise.controller;
 
 import com.shreya.spendwise.dto.ExpenseRequest;
 import com.shreya.spendwise.dto.ExpenseResponse;
+import com.shreya.spendwise.entity.Category;
 import com.shreya.spendwise.service.ExpenseService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -27,7 +28,7 @@ public class ExpenseController {
 
     @GetMapping
     public ResponseEntity<List<ExpenseResponse>> getExpenses(
-            @RequestParam(required = false) String category) {
+            @RequestParam(required = false) Category category) {
         return ResponseEntity.ok(expenseService.getExpenses(category));
     }
 

@@ -15,8 +15,9 @@ public class Expense {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private String category;
+    private Category category;
 
     @Column(nullable = false)
     private LocalDate date;
@@ -35,7 +36,7 @@ public class Expense {
     }
 
     // TODO: include User parameter when authentication is implemented
-    public Expense(Double amount, String category, LocalDate date, String note) {
+    public Expense(Double amount, Category category, LocalDate date, String note) {
         this.amount = amount;
         this.category = category;
         this.date = date;

@@ -1,15 +1,17 @@
 package com.shreya.spendwise.dto;
 
+import com.shreya.spendwise.entity.Category;
+
 import java.time.LocalDate;
 
 public class ExpenseResponse {
     private Long id;
     private Double amount;
-    private String category;
+    private Category category;
     private LocalDate date;
     private String note;
 
-    public ExpenseResponse(Long id, Double amount, String category, LocalDate date, String note) {
+    public ExpenseResponse(Long id, Double amount, Category category, LocalDate date, String note) {
         this.id = id;
         this.amount = amount;
         this.category = category;
@@ -33,11 +35,11 @@ public class ExpenseResponse {
         this.amount = amount;
     }
 
-    public String getCategory() {
+    public Category getCategory() {
         return category;
     }
 
-    public void setCategory(String category) {
+    public void setCategory(Category category) {
         this.category = category;
     }
 

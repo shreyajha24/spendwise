@@ -1,6 +1,6 @@
 package com.shreya.spendwise.dto;
 
-import jakarta.validation.constraints.NotBlank;
+import com.shreya.spendwise.entity.Category;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.PastOrPresent;
 import jakarta.validation.constraints.Positive;
@@ -17,8 +17,8 @@ public class ExpenseRequest {
     @Size(max = 200, message = "Note must be at most 200 characters.")
     private String note;
 
-    @NotBlank(message = "Category is required.")
-    private String category;
+    @NotNull(message = "Category is required.")
+    private Category category;
 
     @NotNull(message = "Date is required.")
     @PastOrPresent(message = "Date cannot be in the future.")
@@ -40,11 +40,11 @@ public class ExpenseRequest {
         this.note = note;
     }
 
-    public String getCategory() {
+    public Category getCategory() {
         return category;
     }
 
-    public void setCategory(String category) {
+    public void setCategory(Category category) {
         this.category = category;
     }
 
