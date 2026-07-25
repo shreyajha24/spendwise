@@ -1,6 +1,7 @@
 package com.shreya.spendwise.controller;
 
 import com.shreya.spendwise.dto.ExpenseRequest;
+import com.shreya.spendwise.dto.ExpensePageResponse;
 import com.shreya.spendwise.dto.ExpenseResponse;
 import com.shreya.spendwise.entity.Category;
 import com.shreya.spendwise.service.ExpenseService;
@@ -8,8 +9,6 @@ import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/expenses")
@@ -27,9 +26,13 @@ public class ExpenseController {
     }
 
     @GetMapping
-    public ResponseEntity<List<ExpenseResponse>> getExpenses(
-            @RequestParam(required = false) Category category) {
-        return ResponseEntity.ok(expenseService.getExpenses(category));
+    public ResponseEntity<ExpensePageResponse> getExpenses(
+            @RequestParam(required = false) Category category,
+            @RequestParam(required = false) String note,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "date-desc") String sort) {
+        return ResponseEntity.ok(expenseService.getExpenses(category, note, page, size, sort));
     }
 
     @PostMapping

@@ -175,6 +175,20 @@
                     <tbody id="expenses-table-body"></tbody>
                 </table>
             </div>
+            <div class="pagination-row">
+                <button id="prev-page" type="button" class="btn btn-tertiary">Previous</button>
+                <p id="page-indicator" class="help-text"></p>
+                <button id="next-page" type="button" class="btn btn-tertiary">Next</button>
+                <label class="page-size-control">
+                    Rows
+                    <select id="page-size">
+                        <option value="5">5</option>
+                        <option value="10" selected>10</option>
+                        <option value="20">20</option>
+                        <option value="50">50</option>
+                    </select>
+                </label>
+            </div>
             <p id="dashboard-message" class="message" aria-live="polite"></p>
         </section>
     </section>

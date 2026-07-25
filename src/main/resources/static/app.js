@@ -7,7 +7,16 @@ const categories = [
 const state = {
     token: localStorage.getItem(AUTH_TOKEN_KEY) || "",
     expenses: [],
-    editingId: null
+    editingId: null,
+    pagination: {
+        page: 0,
+        size: 10,
+        totalElements: 0,
+        totalPages: 0,
+        first: true,
+        last: true
+    },
+    noteDebounceTimer: null
 };
 
 const authScreen = document.getElementById("auth-screen");
@@ -37,6 +46,10 @@ const filterCategory = document.getElementById("filter-category");
 const filterNote = document.getElementById("filter-note");
 const sortBy = document.getElementById("sort-by");
 const resetFilters = document.getElementById("reset-filters");
+const prevPageButton = document.getElementById("prev-page");
+const nextPageButton = document.getElementById("next-page");
+const pageIndicator = document.getElementById("page-indicator");
+const pageSize = document.getElementById("page-size");
 
 function setMessage(element, text, isError = false) {
     element.textContent = text || "";
@@ -149,28 +162,21 @@ function updateSummary(items) {
     setCategoryInsights(items);
 }
 
-function applyClientFilters(expenses) {
-    const noteTerm = filterNote.value.trim().toLowerCase();
-    const sortValue = sortBy.value;
-    const filtered = expenses.filter((expense) => {
-        if (!noteTerm) return true;
-        return (expense.note || "").toLowerCase().includes(noteTerm);
-    });
-
-    filtered.sort((a, b) => {
-        if (sortValue === "amount-asc") return a.amount - b.amount;
-        if (sortValue === "amount-desc") return b.amount - a.amount;
-        if (sortValue === "date-asc") return a.date.localeCompare(b.date);
-        return b.date.localeCompare(a.date);
-    });
-
-    return filtered;
+function updatePaginationControls() {
+    const hasData = state.pagination.totalElements > 0;
+    const currentPage = hasData ? state.pagination.page + 1 : 0;
+    pageIndicator.textContent = `Page ${currentPage} of ${state.pagination.totalPages}`;
+    prevPageButton.disabled = state.pagination.first || !hasData;
+    nextPageButton.disabled = state.pagination.last || !hasData;
+    pageSize.value = String(state.pagination.size);
 }
 
 function renderExpenses() {
-    const items = applyClientFilters(state.expenses);
+    const items = state.expenses;
+    const currentPage = state.pagination.totalPages === 0 ? 0 : state.pagination.page + 1;
     updateSummary(items);
-    filterStatus.textContent = `Showing ${items.length} expense(s) from ${state.expenses.length} fetched record(s).`;
+    filterStatus.textContent = `Showing ${items.length} expense(s) on page ${currentPage} of ${state.pagination.totalPages}. Total matching records: ${state.pagination.totalElements}.`;
+    updatePaginationControls();
 
     if (items.length === 0) {
         expensesTableBody.innerHTML = `<tr><td colspan="5">No expenses found for this view.</td></tr>`;
@@ -191,10 +197,32 @@ function renderExpenses() {
     `).join("");
 }
 
-async function fetchExpenses() {
+async function fetchExpenses(page = state.pagination.page) {
+    const params = new URLSearchParams();
     const category = filterCategory.value;
-    const path = category ? `/expenses?category=${encodeURIComponent(category)}` : "/expenses";
-    state.expenses = await apiRequest(path);
+    const note = filterNote.value.trim();
+    if (category) params.set("category", category);
+    if (note) params.set("note", note);
+    params.set("sort", sortBy.value);
+    params.set("page", String(page));
+    params.set("size", String(state.pagination.size));
+
+    const payload = await apiRequest(`/expenses?${params.toString()}`);
+    state.expenses = payload.content || [];
+    state.pagination = {
+        page: payload.page,
+        size: payload.size,
+        totalElements: payload.totalElements,
+        totalPages: payload.totalPages,
+        first: payload.first,
+        last: payload.last
+    };
+
+    if (state.pagination.totalPages > 0 && state.pagination.page >= state.pagination.totalPages) {
+        await fetchExpenses(state.pagination.totalPages - 1);
+        return;
+    }
+
     renderExpenses();
 }
 
@@ -235,6 +263,12 @@ function saveToken(token) {
 
 function logout() {
     state.token = "";
+    state.expenses = [];
+    state.pagination = { page: 0, size: 10, totalElements: 0, totalPages: 0, first: true, last: true };
+    if (state.noteDebounceTimer) {
+        clearTimeout(state.noteDebounceTimer);
+        state.noteDebounceTimer = null;
+    }
     localStorage.removeItem(AUTH_TOKEN_KEY);
     showAuth();
     resetExpenseForm();
@@ -322,7 +356,7 @@ loginForm.addEventListener("submit", async (event) => {
         }, true);
         saveToken(data.token);
         showDashboard();
-        await fetchExpenses();
+        await fetchExpenses(0);
         setMessage(dashboardMessage, "Welcome back!");
         loginForm.reset();
     } catch (error) {
@@ -388,7 +422,7 @@ resetFilters.addEventListener("click", async () => {
     filterNote.value = "";
     sortBy.value = "date-desc";
     try {
-        await fetchExpenses();
+        await fetchExpenses(0);
     } catch (error) {
         setMessage(dashboardMessage, error.message, true);
     }
@@ -396,14 +430,58 @@ resetFilters.addEventListener("click", async () => {
 
 filterCategory.addEventListener("change", async () => {
     try {
-        await fetchExpenses();
+        await fetchExpenses(0);
     } catch (error) {
         setMessage(dashboardMessage, error.message, true);
     }
 });
 
-filterNote.addEventListener("input", renderExpenses);
-sortBy.addEventListener("change", renderExpenses);
+filterNote.addEventListener("input", () => {
+    if (state.noteDebounceTimer) {
+        clearTimeout(state.noteDebounceTimer);
+    }
+    state.noteDebounceTimer = setTimeout(() => {
+        fetchExpenses(0).catch((error) => {
+            setMessage(dashboardMessage, error.message, true);
+        });
+    }, 250);
+});
+
+sortBy.addEventListener("change", async () => {
+    try {
+        await fetchExpenses(0);
+    } catch (error) {
+        setMessage(dashboardMessage, error.message, true);
+    }
+});
+
+pageSize.addEventListener("change", async () => {
+    state.pagination.size = Number(pageSize.value);
+    try {
+        await fetchExpenses(0);
+    } catch (error) {
+        setMessage(dashboardMessage, error.message, true);
+    }
+});
+
+prevPageButton.addEventListener("click", async () => {
+    if (state.pagination.first) return;
+    try {
+        await fetchExpenses(state.pagination.page - 1);
+    } catch (error) {
+        setMessage(dashboardMessage, error.message, true);
+    }
+});
+
+nextPageButton.addEventListener("click", async () => {
+    if (state.pagination.last) return;
+    try {
+        await fetchExpenses(state.pagination.page + 1);
+    } catch (error) {
+        setMessage(dashboardMessage, error.message, true);
+    }
+});
+
 registerPasswordInput.addEventListener("input", updatePasswordStrength);
 
 expensesTableBody.addEventListener("click", async (event) => {
