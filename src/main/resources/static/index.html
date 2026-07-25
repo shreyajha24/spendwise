@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SpendWise</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="bg-decor">
+    <span class="blob blob-a"></span>
+    <span class="blob blob-b"></span>
+    <span class="blob blob-c"></span>
+</div>
+
+<main class="app-shell">
+    <section id="auth-screen" class="screen">
+        <article class="auth-stage">
+            <header class="auth-hero">
+                <div class="brand-row">
+                    <div class="brand-badge">SW</div>
+                    <div>
+                        <p class="eyebrow">Personal expense workspace</p>
+                        <h1>SpendWise</h1>
+                    </div>
+                </div>
+                <h2>Track expenses with a clean, focused flow from login to insights.</h2>
+                <p class="muted">A single experience for secure access, quick entry, filtering, updates, and smart overview cards.</p>
+                <div class="promo-stats">
+                    <div>
+                        <strong id="promo-count-1">0</strong>
+                        <p>records managed</p>
+                    </div>
+                    <div>
+                        <strong id="promo-count-2">0</strong>
+                        <p>categories</p>
+                    </div>
+                    <div>
+                        <strong id="promo-count-3">0</strong>
+                        <p>live insights</p>
+                    </div>
+                </div>
+                <button id="promo-register-button" type="button" class="btn btn-light">Get started</button>
+            </header>
+
+            <section class="auth-body">
+                <div class="tab-row">
+                    <button type="button" id="login-tab" class="tab active">Login</button>
+                    <button type="button" id="register-tab" class="tab">Register</button>
+                </div>
+
+                <form id="login-form" class="form">
+                    <label>Email
+                        <input id="login-email" type="email" autocomplete="email" required placeholder="you@example.com">
+                    </label>
+                    <label>Password
+                        <div class="input-with-action">
+                            <input id="login-password" type="password" autocomplete="current-password" required placeholder="********">
+                            <button type="button" class="ghost-action" data-toggle-password="login-password">Show</button>
+                        </div>
+                    </label>
+                    <button type="submit" class="btn btn-primary">Login</button>
+                </form>
+
+                <form id="register-form" class="form hidden">
+                    <label>Username
+                        <input id="register-username" type="text" autocomplete="username" required placeholder="Your name">
+                    </label>
+                    <label>Email
+                        <input id="register-email" type="email" autocomplete="email" required placeholder="you@example.com">
+                    </label>
+                    <label>Password
+                        <div class="input-with-action">
+                            <input id="register-password" type="password" autocomplete="new-password" minlength="8" required placeholder="Minimum 8 characters">
+                            <button type="button" class="ghost-action" data-toggle-password="register-password">Show</button>
+                        </div>
+                    </label>
+                    <div class="strength-track">
+                        <span id="register-strength-bar"></span>
+                    </div>
+                    <p id="register-strength-text" class="help-text">Use 8+ characters with mixed case, number and symbol.</p>
+                    <button type="submit" class="btn btn-primary">Create account</button>
+                </form>
+
+                <p id="auth-message" class="message" aria-live="polite"></p>
+            </section>
+        </article>
+    </section>
+
+    <section id="dashboard-screen" class="screen hidden">
+        <header class="topbar panel">
+            <div>
+                <p id="dashboard-greeting" class="eyebrow">Good day</p>
+                <h2>Expense Dashboard</h2>
+                <p class="muted">Add, update, filter, sort and manage every expense easily.</p>
+            </div>
+            <button id="logout-button" class="btn btn-secondary" type="button">Logout</button>
+        </header>
+
+        <section class="grid-two">
+            <article class="panel">
+                <h3 id="expense-form-title">Add Expense</h3>
+                <form id="expense-form" class="form">
+                    <label>Amount
+                        <input id="expense-amount" type="number" min="0.01" step="0.01" required placeholder="0.00">
+                    </label>
+                    <label>Category
+                        <select id="expense-category" required></select>
+                    </label>
+                    <label>Date
+                        <input id="expense-date" type="date" required>
+                    </label>
+                    <label>Note
+                        <input id="expense-note" type="text" maxlength="200" placeholder="Optional note">
+                    </label>
+                    <div class="row-actions">
+                        <button type="submit" class="btn btn-primary" id="expense-submit">Add Expense</button>
+                        <button type="button" class="btn btn-tertiary hidden" id="cancel-edit">Cancel Edit</button>
+                    </div>
+                </form>
+            </article>
+
+            <article class="panel summary-panel">
+                <h3>Overview</h3>
+                <div class="summary-cards">
+                    <div class="card">
+                        <p>Total Expenses</p>
+                        <strong id="total-expenses">0</strong>
+                    </div>
+                    <div class="card">
+                        <p>Total Amount</p>
+                        <strong id="total-amount">Rs 0.00</strong>
+                    </div>
+                    <div class="card">
+                        <p>Highest Expense</p>
+                        <strong id="max-expense">Rs 0.00</strong>
+                    </div>
+                    <div class="card">
+                        <p>Average Expense</p>
+                        <strong id="avg-expense">Rs 0.00</strong>
+                    </div>
+                </div>
+                <h3 class="insight-title">Category Insights</h3>
+                <ul id="category-insights" class="insight-list"></ul>
+            </article>
+        </section>
+
+        <section class="panel">
+            <div class="filters-row">
+                <h3>Expenses</h3>
+                <div class="filters">
+                    <select id="filter-category"></select>
+                    <input id="filter-note" type="text" placeholder="Search note">
+                    <select id="sort-by">
+                        <option value="date-desc">Newest first</option>
+                        <option value="date-asc">Oldest first</option>
+                        <option value="amount-desc">Amount high-low</option>
+                        <option value="amount-asc">Amount low-high</option>
+                    </select>
+                    <button id="reset-filters" type="button" class="btn btn-tertiary">Reset</button>
+                </div>
+            </div>
+            <p id="filter-status" class="help-text"></p>
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                    <tr>
+                        <th>Amount</th>
+                        <th>Category</th>
+                        <th>Date</th>
+                        <th>Note</th>
+                        <th>Actions</th>
+                    </tr>
+                    </thead>
+                    <tbody id="expenses-table-body"></tbody>
+                </table>
+            </div>
+            <p id="dashboard-message" class="message" aria-live="polite"></p>
+        </section>
+    </section>
+</main>
+<script src="app.js"></script>
+</body>
+</html>
