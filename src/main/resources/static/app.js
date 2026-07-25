@@ -201,9 +201,11 @@ async function fetchExpenses(page = state.pagination.page) {
     const params = new URLSearchParams();
     const category = filterCategory.value;
     const note = filterNote.value.trim();
+    const [sortField, sortDirection] = sortBy.value.split("-");
     if (category) params.set("category", category);
     if (note) params.set("note", note);
-    params.set("sort", sortBy.value);
+    params.set("sortBy", sortField || "date");
+    params.set("direction", sortDirection || "desc");
     params.set("page", String(page));
     params.set("size", String(state.pagination.size));
 
