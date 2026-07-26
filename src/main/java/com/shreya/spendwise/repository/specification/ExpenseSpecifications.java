@@ -10,13 +10,10 @@ public final class ExpenseSpecifications {
     }
 
     public static Specification<Expense> byFilter(User user, Category category, String note) {
-        Specification<Expense> specification = belongsToUser(user);
-        if (category != null) {
-            specification = specification.and(hasCategory(category));
-        }
-        if (note != null && !note.isBlank()) {
-            specification = specification.and(noteContains(note.trim()));
-        }
+        Specification<Expense> specification = Specification
+                .where(belongsToUser(user))
+                .and(category != null ? hasCategory(category) : null)
+                .and(note != null && !note.isBlank() ? hasNote(note.trim()) : null);
         return specification;
     }
 
@@ -28,7 +25,7 @@ public final class ExpenseSpecifications {
         return (root, query, criteriaBuilder) -> criteriaBuilder.equal(root.get("category"), category);
     }
 
-    public static Specification<Expense> noteContains(String note) {
+    public static Specification<Expense> hasNote(String note) {
         return (root, query, criteriaBuilder) ->
                 criteriaBuilder.like(criteriaBuilder.lower(root.get("note")), "%" + note.toLowerCase() + "%");
     }
