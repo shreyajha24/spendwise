@@ -4,16 +4,11 @@ import com.shreya.spendwise.dto.ExpenseFilterRequest;
 import com.shreya.spendwise.dto.ExpenseRequest;
 import com.shreya.spendwise.dto.ExpensePageResponse;
 import com.shreya.spendwise.dto.ExpenseResponse;
-import com.shreya.spendwise.dto.CategorySpendingResponse;
-import com.shreya.spendwise.dto.ExpenseAnalyticsSummaryResponse;
-import com.shreya.spendwise.dto.MonthlySpendingResponse;
 import com.shreya.spendwise.service.ExpenseService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/expenses")
@@ -33,21 +28,6 @@ public class ExpenseController {
     @GetMapping
     public ResponseEntity<ExpensePageResponse> getExpenses(ExpenseFilterRequest filterRequest) {
         return ResponseEntity.ok(expenseService.getExpenses(filterRequest));
-    }
-
-    @GetMapping("/analytics/summary")
-    public ResponseEntity<ExpenseAnalyticsSummaryResponse> getExpenseAnalyticsSummary() {
-        return ResponseEntity.ok(expenseService.getExpenseAnalyticsSummary());
-    }
-
-    @GetMapping("/analytics/monthly-spending")
-    public ResponseEntity<List<MonthlySpendingResponse>> getMonthlySpending() {
-        return ResponseEntity.ok(expenseService.getMonthlySpending());
-    }
-
-    @GetMapping("/analytics/category-wise-spending")
-    public ResponseEntity<List<CategorySpendingResponse>> getCategoryWiseSpending() {
-        return ResponseEntity.ok(expenseService.getCategoryWiseSpending());
     }
 
     @PostMapping

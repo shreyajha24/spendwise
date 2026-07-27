@@ -1,12 +1,9 @@
 package com.shreya.spendwise.service;
 
 import com.shreya.spendwise.dto.ExpenseFilterRequest;
-import com.shreya.spendwise.dto.ExpenseAnalyticsSummaryResponse;
 import com.shreya.spendwise.dto.ExpensePageResponse;
 import com.shreya.spendwise.dto.ExpenseRequest;
 import com.shreya.spendwise.dto.ExpenseResponse;
-import com.shreya.spendwise.dto.CategorySpendingResponse;
-import com.shreya.spendwise.dto.MonthlySpendingResponse;
 import com.shreya.spendwise.entity.Expense;
 import com.shreya.spendwise.entity.User;
 import com.shreya.spendwise.exception.ExpenseNotFoundException;
@@ -18,9 +15,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
-
-import java.time.LocalDate;
-import java.util.List;
 
 import static com.shreya.spendwise.repository.specification.ExpenseSpecification.hasCategory;
 import static com.shreya.spendwise.repository.specification.ExpenseSpecification.hasNote;
@@ -104,32 +98,6 @@ public class ExpenseService {
         Long currentUserId = currentUserService.getCurrentUser().getId();
         Expense expense = findExpenseById(id, currentUserId);
         expenseRepository.delete(expense);
-    }
-
-    public ExpenseAnalyticsSummaryResponse getExpenseAnalyticsSummary() {
-        Long currentUserId = currentUserService.getCurrentUser().getId();
-        LocalDate currentDate = LocalDate.now();
-        LocalDate startOfMonth = currentDate.withDayOfMonth(1);
-        LocalDate endOfMonth = currentDate.withDayOfMonth(currentDate.lengthOfMonth());
-
-        return new ExpenseAnalyticsSummaryResponse(
-                expenseRepository.findTotalSpendingBetweenDates(currentUserId, startOfMonth, endOfMonth),
-                expenseRepository.findHighestExpense(currentUserId),
-                expenseRepository.findAverageExpense(currentUserId),
-                expenseRepository.findLowestExpense(currentUserId),
-                expenseRepository.countByUserId(currentUserId),
-                expenseRepository.countExpensesBetweenDates(currentUserId, startOfMonth, endOfMonth)
-        );
-    }
-
-    public List<MonthlySpendingResponse> getMonthlySpending() {
-        Long currentUserId = currentUserService.getCurrentUser().getId();
-        return expenseRepository.findMonthlySpending(currentUserId);
-    }
-
-    public List<CategorySpendingResponse> getCategoryWiseSpending() {
-        Long currentUserId = currentUserService.getCurrentUser().getId();
-        return expenseRepository.findCategoryWiseSpending(currentUserId);
     }
 
     private Expense findExpenseById(Long id, Long userId) {
