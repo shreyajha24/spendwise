@@ -10,11 +10,17 @@ public final class ExpenseSpecifications {
     }
 
     public static Specification<Expense> byFilter(User user, Category category, String note) {
-        Specification<Expense> specification = Specification
-                .where(belongsToUser(user))
-                .and(category != null ? hasCategory(category) : null)
-                .and(note != null && !note.isBlank() ? hasNote(note.trim()) : null);
-        return specification;
+        Specification<Expense> spec = Specification.where(belongsToUser(user));
+
+        if (category != null) {
+            spec = spec.and(hasCategory(category));
+        }
+
+        if (note != null && !note.isBlank()) {
+            spec = spec.and(hasNote(note.trim()));
+        }
+
+        return spec;
     }
 
     public static Specification<Expense> belongsToUser(User user) {

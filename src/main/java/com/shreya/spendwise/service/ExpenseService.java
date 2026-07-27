@@ -9,15 +9,13 @@ import com.shreya.spendwise.entity.User;
 import com.shreya.spendwise.exception.ExpenseNotFoundException;
 import com.shreya.spendwise.mapper.ExpenseMapper;
 import com.shreya.spendwise.repository.ExpenseRepository;
+import com.shreya.spendwise.repository.specification.ExpenseSpecifications;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
-
-import static com.shreya.spendwise.repository.specification.ExpenseSpecification.hasCategory;
-import static com.shreya.spendwise.repository.specification.ExpenseSpecification.hasNote;
 
 @Service
 public class ExpenseService {
@@ -51,22 +49,11 @@ public class ExpenseService {
                 resolveSort(filterRequest.getSortBy(), filterRequest.getDirection())
         );
 
-        String note = filterRequest.getNote();
-        boolean hasNoteFilter = note != null && !note.isBlank();
-        if (hasNoteFilter) {
-            note = note.trim();
-        }
-
-        Specification<Expense> spec = Specification.where((Specification<Expense>) null)
-                .and((root, query, criteriaBuilder) -> criteriaBuilder.equal(root.get("user"), currentUser));
-
-        if (filterRequest.getCategory() != null) {
-            spec = spec.and(hasCategory(filterRequest.getCategory()));
-        }
-
-        if (hasNoteFilter) {
-            spec = spec.and(hasNote(note));
-        }
+        Specification<Expense> spec = ExpenseSpecifications.byFilter(
+                currentUser,
+                filterRequest.getCategory(),
+                filterRequest.getNote()
+        );
 
         Page<Expense> expensePage = expenseRepository.findAll(spec, pageable);
 
@@ -110,7 +97,7 @@ public class ExpenseService {
         String normalizedDirection = direction == null ? "desc" : direction.trim().toLowerCase();
 
         if (!"asc".equals(normalizedDirection) && !"desc".equals(normalizedDirection)) {
-            throw new IllegalArgumentException("Invalid direction value.");
+            throw new IllegalArgumentException("Invalid direction value. Allowed values are 'asc' or 'desc'.");
         }
 
         Sort.Direction sortDirection = "asc".equals(normalizedDirection)
@@ -122,8 +109,14 @@ public class ExpenseService {
         if ("amount".equals(normalizedSortBy)) {
             return Sort.by(sortDirection, "amount").and(Sort.by(sortDirection, "id"));
         }
+        if ("category".equals(normalizedSortBy)) {
+            return Sort.by(sortDirection, "category").and(Sort.by(sortDirection, "id"));
+        }
+        if ("id".equals(normalizedSortBy)) {
+            return Sort.by(sortDirection, "id");
+        }
 
-        throw new IllegalArgumentException("Invalid sortBy value.");
+        throw new IllegalArgumentException("Invalid sortBy value: '" + sortBy + "'. Allowed values are 'date', 'amount', 'category', 'id'.");
     }
 
     private void validatePagination(int page, int size) {
@@ -134,5 +127,4 @@ public class ExpenseService {
             throw new IllegalArgumentException("Size must be between 1 and 100.");
         }
     }
-
 }

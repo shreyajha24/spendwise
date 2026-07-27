@@ -4,11 +4,15 @@ import com.shreya.spendwise.dto.ExpenseFilterRequest;
 import com.shreya.spendwise.dto.ExpenseRequest;
 import com.shreya.spendwise.dto.ExpensePageResponse;
 import com.shreya.spendwise.dto.ExpenseResponse;
+import com.shreya.spendwise.entity.Category;
 import com.shreya.spendwise.service.ExpenseService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.*;
+
+import java.beans.PropertyEditorSupport;
 
 @RestController
 @RequestMapping("/expenses")
@@ -20,13 +24,31 @@ public class ExpenseController {
         this.expenseService = expenseService;
     }
 
+    @InitBinder
+    public void initBinder(WebDataBinder binder) {
+        binder.registerCustomEditor(Category.class, new PropertyEditorSupport() {
+            @Override
+            public void setAsText(String text) throws IllegalArgumentException {
+                if (text == null || text.isBlank()) {
+                    setValue(null);
+                } else {
+                    try {
+                        setValue(Category.valueOf(text.trim().toUpperCase()));
+                    } catch (IllegalArgumentException ex) {
+                        throw new IllegalArgumentException("Invalid category value: '" + text + "'.");
+                    }
+                }
+            }
+        });
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<ExpenseResponse> getExpenseById(@PathVariable Long id) {
         return ResponseEntity.ok(expenseService.getExpenseById(id));
     }
 
     @GetMapping
-    public ResponseEntity<ExpensePageResponse> getExpenses(ExpenseFilterRequest filterRequest) {
+    public ResponseEntity<ExpensePageResponse> getExpenses(@ModelAttribute ExpenseFilterRequest filterRequest) {
         return ResponseEntity.ok(expenseService.getExpenses(filterRequest));
     }
 
