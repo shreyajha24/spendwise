@@ -3,10 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SpendWise</title>
+    <title>SpendWise — Intelligent & Fast Expense Tracker</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;0,9..40,800;1,9..40,400&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Lucide Icons -->
+    <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+
 <div class="bg-decor">
     <span class="blob blob-a"></span>
     <span class="blob blob-b"></span>
@@ -14,72 +21,95 @@
 </div>
 
 <main class="app-shell">
+    <!-- Auth Screen (Login / Sign Up / Demo) -->
     <section id="auth-screen" class="screen">
         <article class="auth-stage">
             <header class="auth-hero">
                 <div class="brand-row">
-                    <div class="brand-badge">SW</div>
+                    <div class="brand-badge">⚡ SW</div>
                     <div>
-                        <p class="eyebrow">Personal expense workspace</p>
+                        <p class="eyebrow">Smart Financial Hub</p>
                         <h1>SpendWise</h1>
                     </div>
                 </div>
-                <h2>Track expenses with a clean, focused flow from login to insights.</h2>
-                <p class="muted">A single experience for secure access, quick entry, filtering, updates, and smart overview cards.</p>
+                <h2>Log expenses in seconds, master your budget in real time.</h2>
+                <p class="muted">Experience ultra-fast 1-tap category logging, visual budget rings, category insights, and clean spend tracking.</p>
                 <div class="promo-stats">
                     <div>
-                        <strong id="promo-count-1">0</strong>
-                        <p>records managed</p>
+                        <strong id="promo-count-1">5,000+</strong>
+                        <p>expenses logged</p>
                     </div>
                     <div>
-                        <strong id="promo-count-2">0</strong>
-                        <p>categories</p>
+                        <strong id="promo-count-2">8</strong>
+                        <p>smart categories</p>
                     </div>
                     <div>
-                        <strong id="promo-count-3">0</strong>
-                        <p>live insights</p>
+                        <strong id="promo-count-3">100%</strong>
+                        <p>real-time control</p>
                     </div>
                 </div>
-                <button id="promo-register-button" type="button" class="btn btn-light">Get started</button>
+                <div class="hero-actions">
+                    <button id="promo-register-button" type="button" class="btn btn-light">Create Free Account</button>
+                    <button id="demo-mode-button" type="button" class="btn btn-glass">⚡ Try Demo Mode Instant</button>
+                </div>
             </header>
 
             <section class="auth-body">
                 <div class="tab-row">
-                    <button type="button" id="login-tab" class="tab active">Login</button>
-                    <button type="button" id="register-tab" class="tab">Register</button>
+                    <button type="button" id="login-tab" class="tab active">Log In</button>
+                    <button type="button" id="register-tab" class="tab">Sign Up</button>
                 </div>
 
+                <!-- Login Form -->
                 <form id="login-form" class="form">
-                    <label>Email
-                        <input id="login-email" type="email" autocomplete="email" required placeholder="you@example.com">
+                    <label>Email Address
+                        <div class="input-wrapper">
+                            <i data-lucide="mail" class="input-icon"></i>
+                            <input id="login-email" type="email" autocomplete="email" required placeholder="name@example.com">
+                        </div>
                     </label>
                     <label>Password
                         <div class="input-with-action">
-                            <input id="login-password" type="password" autocomplete="current-password" required placeholder="********">
+                            <div class="input-wrapper">
+                                <i data-lucide="lock" class="input-icon"></i>
+                                <input id="login-password" type="password" autocomplete="current-password" required placeholder="••••••••">
+                            </div>
                             <button type="button" class="ghost-action" data-toggle-password="login-password">Show</button>
                         </div>
                     </label>
-                    <button type="submit" class="btn btn-primary">Login</button>
+                    <button type="submit" class="btn btn-primary btn-block">Log In to Dashboard →</button>
                 </form>
 
+                <!-- Register Form -->
                 <form id="register-form" class="form hidden">
-                    <label>Username
-                        <input id="register-username" type="text" autocomplete="username" required placeholder="Your name">
+                    <label>Full Name / Username
+                        <div class="input-wrapper">
+                            <i data-lucide="user" class="input-icon"></i>
+                            <input id="register-username" type="text" autocomplete="username" required placeholder="Alex Sharma">
+                        </div>
                     </label>
-                    <label>Email
-                        <input id="register-email" type="email" autocomplete="email" required placeholder="you@example.com">
+                    <label>Email Address
+                        <div class="input-wrapper">
+                            <i data-lucide="mail" class="input-icon"></i>
+                            <input id="register-email" type="email" autocomplete="email" required placeholder="name@example.com">
+                        </div>
                     </label>
                     <label>Password
                         <div class="input-with-action">
-                            <input id="register-password" type="password" autocomplete="new-password" minlength="8" required placeholder="Minimum 8 characters">
+                            <div class="input-wrapper">
+                                <i data-lucide="lock" class="input-icon"></i>
+                                <input id="register-password" type="password" autocomplete="new-password" minlength="6" required placeholder="Min 6 characters">
+                            </div>
                             <button type="button" class="ghost-action" data-toggle-password="register-password">Show</button>
                         </div>
                     </label>
-                    <div class="strength-track">
-                        <span id="register-strength-bar"></span>
+                    <div class="strength-container">
+                        <div class="strength-track">
+                            <span id="register-strength-bar"></span>
+                        </div>
+                        <p id="register-strength-text" class="help-text">Use 6+ characters with numbers & symbols.</p>
                     </div>
-                    <p id="register-strength-text" class="help-text">Use 8+ characters with mixed case, number and symbol.</p>
-                    <button type="submit" class="btn btn-primary">Create account</button>
+                    <button type="submit" class="btn btn-primary btn-block">Create Account & Continue →</button>
                 </form>
 
                 <p id="auth-message" class="message" aria-live="polite"></p>
@@ -87,112 +117,270 @@
         </article>
     </section>
 
+    <!-- Dashboard Screen -->
     <section id="dashboard-screen" class="screen hidden">
+        <!-- Top Bar Header -->
         <header class="topbar panel">
-            <div>
-                <p id="dashboard-greeting" class="eyebrow">Good day</p>
-                <h2>Expense Dashboard</h2>
-                <p class="muted">Add, update, filter, sort and manage every expense easily.</p>
+            <div class="user-welcome">
+                <div class="avatar" id="user-avatar">S</div>
+                <div>
+                    <p id="dashboard-greeting" class="eyebrow">Good Day</p>
+                    <h2 id="user-greeting-name">Welcome Back</h2>
+                </div>
             </div>
-            <button id="logout-button" class="btn btn-secondary" type="button">Logout</button>
+            <div class="topbar-actions">
+                <div class="budget-badge-pill" id="budget-edit-trigger" title="Click to change monthly budget">
+                    <i data-lucide="target"></i>
+                    <span>Budget: <strong id="header-budget-text">₹30,000</strong></span>
+                    <i data-lucide="edit-2" class="icon-sm"></i>
+                </div>
+                <button id="export-csv-button" class="btn btn-tertiary btn-icon-only" title="Export CSV" type="button">
+                    <i data-lucide="download"></i>
+                </button>
+                <button id="logout-button" class="btn btn-secondary" type="button">
+                    <i data-lucide="log-out"></i> Log out
+                </button>
+            </div>
         </header>
 
-        <section class="grid-two">
-            <article class="panel">
-                <h3 id="expense-form-title">Add Expense</h3>
-                <form id="expense-form" class="form">
-                    <label>Amount
-                        <input id="expense-amount" type="number" min="0.01" step="0.01" required placeholder="0.00">
-                    </label>
-                    <label>Category
-                        <select id="expense-category" required></select>
-                    </label>
-                    <label>Date
-                        <input id="expense-date" type="date" required>
-                    </label>
-                    <label>Note
-                        <input id="expense-note" type="text" maxlength="200" placeholder="Optional note">
-                    </label>
-                    <div class="row-actions">
-                        <button type="submit" class="btn btn-primary" id="expense-submit">Add Expense</button>
-                        <button type="button" class="btn btn-tertiary hidden" id="cancel-edit">Cancel Edit</button>
-                    </div>
-                </form>
-            </article>
+        <!-- Main Dashboard Content Grid -->
+        <div class="dashboard-grid">
+            <!-- Left Column: Quick Add & Budget Gauge -->
+            <div class="dashboard-left">
 
-            <article class="panel summary-panel">
-                <h3>Overview</h3>
+                <!-- Monthly Budget Circular Ring Card -->
+                <article class="panel ring-card">
+                    <div class="panel-header">
+                        <h3>Monthly Budget Overview</h3>
+                        <span class="badge-status" id="budget-status-badge">On Track</span>
+                    </div>
+                    <div class="budget-ring-wrapper">
+                        <svg class="ring-svg" viewBox="0 0 140 140">
+                            <circle class="ring-bg" cx="70" cy="70" r="58" />
+                            <circle id="budget-ring" class="ring-progress" cx="70" cy="70" r="58"
+                                    stroke-dasharray="364.42" stroke-dashoffset="364.42" />
+                        </svg>
+                        <div class="ring-inner-content">
+                            <span id="ring-percent" class="percent-val">0%</span>
+                            <span class="ring-label">of Budget</span>
+                        </div>
+                    </div>
+                    <div class="ring-footer-stats">
+                        <div class="stat-pill">
+                            <span>Spent</span>
+                            <strong id="ring-spent-amount">₹0</strong>
+                        </div>
+                        <div class="stat-pill">
+                            <span>Remaining</span>
+                            <strong id="ring-remaining-amount">₹30,000</strong>
+                        </div>
+                    </div>
+                </article>
+
+                <!-- Quick-Add Expense Panel -->
+                <article class="panel quick-add-panel">
+                    <div class="panel-header">
+                        <h3 id="expense-form-title">⚡ Quick Add Expense</h3>
+                        <span class="muted-tag">Select category & amount</span>
+                    </div>
+                    <form id="expense-form" class="form">
+                        <!-- Category Buttons Grid (1-Tap Selection) -->
+                        <div class="category-grid-label">Category</div>
+                        <div class="category-grid" id="category-grid">
+                            <button type="button" class="category-btn active" data-cat="FOOD">
+                                <span class="cat-emoji">🍕</span>
+                                <span class="cat-name">Food</span>
+                            </button>
+                            <button type="button" class="category-btn" data-cat="TRANSPORT">
+                                <span class="cat-emoji">🚗</span>
+                                <span class="cat-name">Transport</span>
+                            </button>
+                            <button type="button" class="category-btn" data-cat="SHOPPING">
+                                <span class="cat-emoji">🛍️</span>
+                                <span class="cat-name">Shopping</span>
+                            </button>
+                            <button type="button" class="category-btn" data-cat="BILLS">
+                                <span class="cat-emoji">📄</span>
+                                <span class="cat-name">Bills</span>
+                            </button>
+                            <button type="button" class="category-btn" data-cat="HOUSING">
+                                <span class="cat-emoji">🏠</span>
+                                <span class="cat-name">Housing</span>
+                            </button>
+                            <button type="button" class="category-btn" data-cat="HEALTH">
+                                <span class="cat-emoji">💊</span>
+                                <span class="cat-name">Health</span>
+                            </button>
+                            <button type="button" class="category-btn" data-cat="ENTERTAINMENT">
+                                <span class="cat-emoji">🎮</span>
+                                <span class="cat-name">Fun</span>
+                            </button>
+                            <button type="button" class="category-btn" data-cat="OTHER">
+                                <span class="cat-emoji">📦</span>
+                                <span class="cat-name">Other</span>
+                            </button>
+                        </div>
+                        <input type="hidden" id="expense-category" value="FOOD">
+
+                        <!-- Quick Amount Presets -->
+                        <div class="quick-amounts">
+                            <button type="button" class="amount-chip" data-amount="100">+₹100</button>
+                            <button type="button" class="amount-chip" data-amount="200">+₹200</button>
+                            <button type="button" class="amount-chip" data-amount="500">+₹500</button>
+                            <button type="button" class="amount-chip" data-amount="1000">+₹1000</button>
+                            <button type="button" class="amount-chip" data-amount="2000">+₹2000</button>
+                        </div>
+
+                        <!-- Amount, Note, Date Inputs -->
+                        <div class="form-row-grid">
+                            <label class="flex-2">Amount (₹)
+                                <div class="input-wrapper">
+                                    <span class="currency-prefix">₹</span>
+                                    <input id="expense-amount" type="number" min="0.01" step="0.01" required placeholder="0.00">
+                                </div>
+                            </label>
+                            <label class="flex-2">Date
+                                <input id="expense-date" type="date" required>
+                            </label>
+                        </div>
+
+                        <label>Note / Description
+                            <input id="expense-note" type="text" maxlength="200" placeholder="e.g. Swiggy order, Petrol, Electricity bill">
+                        </label>
+
+                        <div class="row-actions">
+                            <button type="submit" class="btn btn-primary btn-grow" id="expense-submit">
+                                <i data-lucide="plus-circle"></i> Add Expense
+                            </button>
+                            <button type="button" class="btn btn-tertiary hidden" id="cancel-edit">Cancel Edit</button>
+                        </div>
+                    </form>
+                </article>
+
+            </div>
+
+            <!-- Right Column: Summary Cards, Visual Analytics & Table -->
+            <div class="dashboard-right">
+
+                <!-- 4 Key Summary Stats Cards -->
                 <div class="summary-cards">
-                    <div class="card">
-                        <p>Total Expenses</p>
-                        <strong id="total-expenses">0</strong>
+                    <div class="card card-purple">
+                        <div class="card-icon"><i data-lucide="wallet"></i></div>
+                        <div>
+                            <p>Total Amount Spent</p>
+                            <strong id="total-amount">₹0.00</strong>
+                        </div>
                     </div>
-                    <div class="card">
-                        <p>Total Amount</p>
-                        <strong id="total-amount">Rs 0.00</strong>
+                    <div class="card card-blue">
+                        <div class="card-icon"><i data-lucide="receipt"></i></div>
+                        <div>
+                            <p>Total Expenses</p>
+                            <strong id="total-expenses">0</strong>
+                        </div>
                     </div>
-                    <div class="card">
-                        <p>Highest Expense</p>
-                        <strong id="max-expense">Rs 0.00</strong>
+                    <div class="card card-amber">
+                        <div class="card-icon"><i data-lucide="trending-up"></i></div>
+                        <div>
+                            <p>Highest Expense</p>
+                            <strong id="max-expense">₹0.00</strong>
+                        </div>
                     </div>
-                    <div class="card">
-                        <p>Average Expense</p>
-                        <strong id="avg-expense">Rs 0.00</strong>
+                    <div class="card card-emerald">
+                        <div class="card-icon"><i data-lucide="calculator"></i></div>
+                        <div>
+                            <p>Average Expense</p>
+                            <strong id="avg-expense">₹0.00</strong>
+                        </div>
                     </div>
                 </div>
-                <h3 class="insight-title">Category Insights</h3>
-                <ul id="category-insights" class="insight-list"></ul>
-            </article>
-        </section>
 
-        <section class="panel">
-            <div class="filters-row">
-                <h3>Expenses</h3>
-                <div class="filters">
-                    <select id="filter-category"></select>
-                    <input id="filter-note" type="text" placeholder="Search note">
-                    <select id="sort-by">
-                        <option value="date-desc">Newest first</option>
-                        <option value="date-asc">Oldest first</option>
-                        <option value="amount-desc">Amount high-low</option>
-                        <option value="amount-asc">Amount low-high</option>
-                    </select>
-                    <button id="reset-filters" type="button" class="btn btn-tertiary">Reset</button>
-                </div>
+                <!-- Category Breakdown Progress Bars Card -->
+                <article class="panel category-breakdown-panel">
+                    <div class="panel-header">
+                        <h3>Category Breakdown</h3>
+                        <span class="muted-tag">Spending Distribution</span>
+                    </div>
+                    <div id="category-insights" class="insight-bars-container"></div>
+                </article>
+
+                <!-- Transactions History & Filters Table -->
+                <article class="panel transactions-panel">
+                    <div class="filters-row">
+                        <h3>Transactions History</h3>
+                        <div class="filters">
+                            <select id="filter-category" class="select-sm"></select>
+                            <div class="search-box">
+                                <i data-lucide="search" class="search-icon"></i>
+                                <input id="filter-note" type="text" placeholder="Search note..." class="input-sm">
+                            </div>
+                            <select id="sort-by" class="select-sm">
+                                <option value="date-desc">Newest First</option>
+                                <option value="date-asc">Oldest First</option>
+                                <option value="amount-desc">Amount High → Low</option>
+                                <option value="amount-asc">Amount Low → High</option>
+                            </select>
+                            <button id="reset-filters" type="button" class="btn btn-tertiary btn-sm">Reset</button>
+                        </div>
+                    </div>
+                    <p id="filter-status" class="help-text"></p>
+
+                    <div class="table-wrap">
+                        <table>
+                            <thead>
+                            <tr>
+                                <th>Category</th>
+                                <th>Amount (₹)</th>
+                                <th>Date</th>
+                                <th>Note</th>
+                                <th>Actions</th>
+                            </tr>
+                            </thead>
+                            <tbody id="expenses-table-body"></tbody>
+                        </table>
+                    </div>
+
+                    <div class="pagination-row">
+                        <button id="prev-page" type="button" class="btn btn-tertiary btn-sm">Previous</button>
+                        <p id="page-indicator" class="help-text"></p>
+                        <button id="next-page" type="button" class="btn btn-tertiary btn-sm">Next</button>
+                        <label class="page-size-control">
+                            Rows:
+                            <select id="page-size" class="select-xs">
+                                <option value="5">5</option>
+                                <option value="10" selected>10</option>
+                                <option value="20">20</option>
+                                <option value="50">50</option>
+                            </select>
+                        </label>
+                    </div>
+                    <p id="dashboard-message" class="message" aria-live="polite"></p>
+                </article>
+
             </div>
-            <p id="filter-status" class="help-text"></p>
-            <div class="table-wrap">
-                <table>
-                    <thead>
-                    <tr>
-                        <th>Amount</th>
-                        <th>Category</th>
-                        <th>Date</th>
-                        <th>Note</th>
-                        <th>Actions</th>
-                    </tr>
-                    </thead>
-                    <tbody id="expenses-table-body"></tbody>
-                </table>
-            </div>
-            <div class="pagination-row">
-                <button id="prev-page" type="button" class="btn btn-tertiary">Previous</button>
-                <p id="page-indicator" class="help-text"></p>
-                <button id="next-page" type="button" class="btn btn-tertiary">Next</button>
-                <label class="page-size-control">
-                    Rows
-                    <select id="page-size">
-                        <option value="5">5</option>
-                        <option value="10" selected>10</option>
-                        <option value="20">20</option>
-                        <option value="50">50</option>
-                    </select>
-                </label>
-            </div>
-            <p id="dashboard-message" class="message" aria-live="polite"></p>
-        </section>
+        </div>
     </section>
 </main>
+
+<!-- Budget Edit Modal -->
+<div id="budget-modal" class="modal-overlay hidden">
+    <div class="modal-card">
+        <h3>Set Monthly Budget</h3>
+        <p class="muted">Enter your monthly budget limit for spending progress tracking.</p>
+        <div class="modal-body">
+            <label>Monthly Limit (₹)
+                <div class="input-wrapper">
+                    <span class="currency-prefix">₹</span>
+                    <input type="number" id="budget-input-val" min="500" step="500" placeholder="30000">
+                </div>
+            </label>
+        </div>
+        <div class="modal-actions">
+            <button type="button" id="save-budget-btn" class="btn btn-primary">Save Budget</button>
+            <button type="button" id="close-budget-btn" class="btn btn-tertiary">Cancel</button>
+        </div>
+    </div>
+</div>
+
 <script src="app.js"></script>
 </body>
 </html>
