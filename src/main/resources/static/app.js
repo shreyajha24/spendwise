@@ -800,4 +800,5 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 });//there is some error in these code
 //have to debug
+//i guess it has some hardcoded bugs need to identify
 
