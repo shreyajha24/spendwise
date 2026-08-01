@@ -444,9 +444,31 @@ async function fetchExpenses(page = state.pagination.page) {
 
     renderExpensesTable();
 
-    // Fetch all for summary ring gauge
-    const allPayload = await apiRequest(`/expenses?size=1000`);
-    updateBudgetRingAndOverview(allPayload?.content || state.expenses);
+    const overviewItems = await fetchAllExpensesForOverview();
+    updateBudgetRingAndOverview(overviewItems);
+}
+
+async function fetchAllExpensesForOverview() {
+    const maxAllowedPageSize = 100;
+    let page = 0;
+    let totalPages = 1;
+    const allItems = [];
+
+    while (page < totalPages) {
+        const params = new URLSearchParams({
+            page: String(page),
+            size: String(maxAllowedPageSize),
+            sortBy: "date",
+            direction: "desc"
+        });
+
+        const payload = await apiRequest(`/expenses?${params.toString()}`);
+        allItems.push(...(payload?.content || []));
+        totalPages = Math.max(1, Number(payload?.totalPages) || 1);
+        page += 1;
+    }
+
+    return allItems;
 }
 
 // Form & Quick Add Logic
@@ -798,7 +820,4 @@ document.addEventListener("DOMContentLoaded", () => {
     } else {
         showAuth();
     }
-});//there is some error in these code
-//have to debug
-//i guess it has some hardcoded bugs need to identify
-
+});
