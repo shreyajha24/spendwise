@@ -2,6 +2,9 @@ package com.shreya.spendwise.service;
 
 import com.shreya.spendwise.dto.ExpenseFilterRequest;
 import com.shreya.spendwise.dto.ExpensePageResponse;
+import com.shreya.spendwise.dto.ExpenseResponse;
+import com.shreya.spendwise.dto.QuickExpenseTemplateResponse;
+import com.shreya.spendwise.dto.WeeklyInsightResponse;
 import com.shreya.spendwise.entity.Category;
 import com.shreya.spendwise.entity.Expense;
 import com.shreya.spendwise.entity.User;
@@ -17,6 +20,8 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 
+import java.time.DayOfWeek;
+import java.time.LocalDate;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -80,5 +85,64 @@ class ExpenseServiceTest {
                 () -> expenseService.getExpenses(filter));
 
         assertTrue(ex.getMessage().contains("Invalid sortBy value"));
+    }
+
+    @Test
+    void shouldReturnQuickTemplates() {
+        List<QuickExpenseTemplateResponse> templates = expenseService.getQuickExpenseTemplates();
+
+        assertFalse(templates.isEmpty());
+        assertTrue(templates.stream().anyMatch(template -> "bus".equals(template.getTemplateKey())));
+        assertTrue(templates.stream().anyMatch(template -> "coffee".equals(template.getTemplateKey())));
+    }
+
+    @Test
+    void shouldCreateExpenseFromTemplate() {
+        when(currentUserService.getCurrentUser()).thenReturn(testUser);
+        when(expenseMapper.toResponse(any(Expense.class))).thenAnswer(invocation -> {
+            Expense expense = invocation.getArgument(0);
+            return new ExpenseResponse(
+                    expense.getId(),
+                    expense.getAmount(),
+                    expense.getCategory(),
+                    expense.getDate(),
+                    expense.getNote()
+            );
+        });
+
+        when(expenseRepository.save(any(Expense.class))).thenAnswer(invocation -> {
+            Expense expense = invocation.getArgument(0);
+            expense.setId(999L);
+            return expense;
+        });
+
+        ExpenseResponse response = expenseService.createExpenseFromTemplate("bus", LocalDate.now());
+
+        assertEquals(999L, response.getId());
+        assertEquals(Category.TRANSPORT, response.getCategory());
+        assertEquals(60.0, response.getAmount());
+        assertEquals("Bus fare", response.getNote());
+    }
+
+    @Test
+    void shouldBuildWeeklyInsights() {
+        when(currentUserService.getCurrentUser()).thenReturn(testUser);
+
+        LocalDate weekStart = LocalDate.now().with(DayOfWeek.MONDAY);
+        Expense foodExpense = new Expense(400.0, Category.FOOD, weekStart.plusDays(1), "Lunch");
+        foodExpense.setUser(testUser);
+        Expense transportExpense = new Expense(120.0, Category.TRANSPORT, weekStart.plusDays(2), "Bus");
+        transportExpense.setUser(testUser);
+
+        when(expenseRepository.findByUser_IdAndDateBetween(eq(testUser.getId()), any(LocalDate.class), any(LocalDate.class)))
+                .thenReturn(List.of(foodExpense, transportExpense));
+
+        WeeklyInsightResponse insight = expenseService.getWeeklyInsights();
+
+        assertEquals(520.0, insight.getTotalSpent());
+        assertEquals(2L, insight.getTotalTransactions());
+        assertEquals(Category.FOOD, insight.getTopCategory());
+        assertNotNull(insight.getSummary());
+        assertFalse(insight.getCategoryBreakdown().isEmpty());
     }
 }

@@ -694,6 +694,35 @@ input:focus, select:focus {
     padding-bottom: 0.2rem;
 }
 
+.template-block {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+}
+
+.template-chip-list {
+    display: flex;
+    gap: 0.45rem;
+    flex-wrap: wrap;
+}
+
+.template-chip {
+    border: 1px solid #dbeafe;
+    background: #eff6ff;
+    color: #1d4ed8;
+    border-radius: 999px;
+    padding: 0.32rem 0.68rem;
+    font-size: 0.78rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.template-chip:hover {
+    background: #1d4ed8;
+    color: #ffffff;
+}
+
 .amount-chip {
     border: 1px solid var(--panel-border);
     background: #f8fafc;
@@ -773,6 +802,63 @@ input:focus, select:focus {
     display: flex;
     flex-direction: column;
     gap: 0.75rem;
+}
+
+.smart-insights-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+}
+
+.insight-summary {
+    color: #1e293b;
+    font-size: 0.92rem;
+    font-weight: 600;
+    line-height: 1.45;
+}
+
+.smart-insight-metrics {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0.55rem;
+    margin-top: 0.55rem;
+}
+
+.metric-pill {
+    background: #f8fafc;
+    border: 1px solid var(--panel-border);
+    border-radius: var(--radius-sm);
+    padding: 0.55rem 0.6rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+}
+
+.metric-pill strong {
+    font-size: 0.88rem;
+    color: #0f172a;
+}
+
+.metric-pill em {
+    font-style: normal;
+    font-size: 0.72rem;
+    color: var(--text-muted);
+}
+
+.smart-insight-top {
+    margin-top: 0.65rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+}
+
+.smart-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 0.5rem;
+    font-size: 0.82rem;
+    color: #334155;
+    font-weight: 600;
 }
 
 .insight-row {
@@ -912,10 +998,14 @@ tbody tr:hover {
 .action-btn-group {
     display: flex;
     gap: 0.35rem;
+    flex-wrap: wrap;
 }
 
 .btn-icon {
-    padding: 0.4rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.45rem 0.65rem;
     border-radius: var(--radius-sm);
     border: 0;
     background: transparent;
@@ -929,9 +1019,18 @@ tbody tr:hover {
     color: var(--primary);
 }
 
+.btn-icon.danger {
+    color: var(--accent-danger);
+}
+
 .btn-icon.danger:hover {
     background: #fee2e2;
     color: var(--accent-danger);
+}
+
+.action-text {
+    font-size: 0.78rem;
+    font-weight: 700;
 }
 
 .pagination-row {
@@ -1041,5 +1140,8 @@ tbody tr:hover {
     }
     .category-grid {
         grid-template-columns: repeat(4, 1fr);
+    }
+    .smart-insight-metrics {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 }

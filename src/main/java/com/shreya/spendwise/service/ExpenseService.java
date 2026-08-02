@@ -4,6 +4,10 @@ import com.shreya.spendwise.dto.ExpenseFilterRequest;
 import com.shreya.spendwise.dto.ExpensePageResponse;
 import com.shreya.spendwise.dto.ExpenseRequest;
 import com.shreya.spendwise.dto.ExpenseResponse;
+import com.shreya.spendwise.dto.CategorySpendInsightResponse;
+import com.shreya.spendwise.dto.QuickExpenseTemplateResponse;
+import com.shreya.spendwise.dto.WeeklyInsightResponse;
+import com.shreya.spendwise.entity.Category;
 import com.shreya.spendwise.entity.Expense;
 import com.shreya.spendwise.entity.User;
 import com.shreya.spendwise.exception.ExpenseNotFoundException;
@@ -17,8 +21,25 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
+import java.text.NumberFormat;
+import java.time.DayOfWeek;
+import java.time.LocalDate;
+import java.util.Comparator;
+import java.util.EnumMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+
 @Service
 public class ExpenseService {
+    private static final List<QuickTemplateDefinition> QUICK_TEMPLATE_DEFINITIONS = List.of(
+            new QuickTemplateDefinition("bus", "Bus", Category.TRANSPORT, 60.0, "Bus fare"),
+            new QuickTemplateDefinition("coffee", "Coffee", Category.FOOD, 150.0, "Coffee"),
+            new QuickTemplateDefinition("lunch", "Lunch", Category.FOOD, 250.0, "Lunch"),
+            new QuickTemplateDefinition("breakfast", "Breakfast", Category.FOOD, 180.0, "Breakfast"),
+            new QuickTemplateDefinition("snack", "Snack", Category.FOOD, 120.0, "Snack")
+    );
+
     private final ExpenseRepository expenseRepository;
     private final ExpenseMapper expenseMapper;
     private final CurrentUserService currentUserService;
@@ -38,6 +59,93 @@ public class ExpenseService {
         expense.setUser(currentUser);
         Expense savedExpense = expenseRepository.save(expense);
         return expenseMapper.toResponse(savedExpense);
+    }
+
+    public List<QuickExpenseTemplateResponse> getQuickExpenseTemplates() {
+        return QUICK_TEMPLATE_DEFINITIONS.stream()
+                .map(definition -> new QuickExpenseTemplateResponse(
+                        definition.key(),
+                        definition.label(),
+                        definition.category(),
+                        definition.amount(),
+                        definition.defaultNote()
+                ))
+                .toList();
+    }
+
+    public ExpenseResponse createExpenseFromTemplate(String templateKey, LocalDate date) {
+        User currentUser = currentUserService.getCurrentUser();
+        QuickTemplateDefinition definition = resolveTemplate(templateKey);
+        LocalDate expenseDate = date == null ? LocalDate.now() : date;
+
+        if (expenseDate.isAfter(LocalDate.now())) {
+            throw new IllegalArgumentException("Date cannot be in the future.");
+        }
+
+        Expense expense = new Expense();
+        expense.setAmount(definition.amount());
+        expense.setCategory(definition.category());
+        expense.setDate(expenseDate);
+        expense.setNote(definition.defaultNote());
+        expense.setUser(currentUser);
+
+        Expense savedExpense = expenseRepository.save(expense);
+        return expenseMapper.toResponse(savedExpense);
+    }
+
+    public WeeklyInsightResponse getWeeklyInsights() {
+        User currentUser = currentUserService.getCurrentUser();
+        LocalDate weekStart = LocalDate.now().with(DayOfWeek.MONDAY);
+        LocalDate weekEnd = weekStart.plusDays(6);
+        List<Expense> weeklyExpenses = expenseRepository.findByUser_IdAndDateBetween(
+                currentUser.getId(),
+                weekStart,
+                weekEnd
+        );
+
+        double totalSpent = weeklyExpenses.stream().mapToDouble(Expense::getAmount).sum();
+        long totalTransactions = weeklyExpenses.size();
+        double averageExpense = totalTransactions == 0 ? 0.0 : totalSpent / totalTransactions;
+
+        Map<Category, Double> categoryTotals = new EnumMap<>(Category.class);
+        for (Expense expense : weeklyExpenses) {
+            categoryTotals.merge(expense.getCategory(), expense.getAmount(), Double::sum);
+        }
+
+        List<CategorySpendInsightResponse> breakdown = categoryTotals.entrySet().stream()
+                .map(entry -> new CategorySpendInsightResponse(
+                        entry.getKey(),
+                        entry.getValue(),
+                        totalSpent == 0
+                                ? 0.0
+                                : Math.round((entry.getValue() * 10000.0) / totalSpent) / 100.0
+                ))
+                .sorted(Comparator.comparing(CategorySpendInsightResponse::getAmount).reversed())
+                .toList();
+
+        Category topCategory = breakdown.isEmpty() ? null : breakdown.getFirst().getCategory();
+        double topCategorySpent = breakdown.isEmpty() ? 0.0 : breakdown.getFirst().getAmount();
+
+        String summary;
+        if (topCategory == null) {
+            summary = "No expenses logged this week yet. Use Quick Templates to add daily expenses in one tap.";
+        } else {
+            summary = "You spent " + formatInr(topCategorySpent) + " on "
+                    + toReadableCategory(topCategory)
+                    + " this week (" + breakdown.getFirst().getPercentage() + "% of weekly spending).";
+        }
+
+        return new WeeklyInsightResponse(
+                weekStart,
+                weekEnd,
+                totalSpent,
+                totalTransactions,
+                averageExpense,
+                topCategory,
+                topCategorySpent,
+                breakdown,
+                summary
+        );
     }
 
     public ExpensePageResponse getExpenses(ExpenseFilterRequest filterRequest) {
@@ -126,5 +234,36 @@ public class ExpenseService {
         if (size < 1 || size > 100) {
             throw new IllegalArgumentException("Size must be between 1 and 100.");
         }
+    }
+
+    private QuickTemplateDefinition resolveTemplate(String templateKey) {
+        String normalizedKey = templateKey == null ? "" : templateKey.trim().toLowerCase();
+        return QUICK_TEMPLATE_DEFINITIONS.stream()
+                .filter(template -> template.key().equals(normalizedKey))
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException(
+                        "Invalid template key: '" + templateKey + "'. Allowed values are "
+                                + QUICK_TEMPLATE_DEFINITIONS.stream()
+                                .map(QuickTemplateDefinition::key)
+                                .toList() + "."
+                ));
+    }
+
+    private String formatInr(double amount) {
+        NumberFormat formatter = NumberFormat.getCurrencyInstance(new Locale("en", "IN"));
+        return formatter.format(amount);
+    }
+
+    private String toReadableCategory(Category category) {
+        String lowercase = category.name().toLowerCase().replace('_', ' ');
+        return Character.toUpperCase(lowercase.charAt(0)) + lowercase.substring(1);
+    }
+
+    private record QuickTemplateDefinition(
+            String key,
+            String label,
+            Category category,
+            Double amount,
+            String defaultNote) {
     }
 }

@@ -6,11 +6,13 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
 public interface ExpenseRepository extends JpaRepository<Expense, Long>, JpaSpecificationExecutor<Expense> {
     Optional<Expense> findByIdAndUser_Id(Long id, Long userId);
+    List<Expense> findByUser_IdAndDateBetween(Long userId, LocalDate startDate, LocalDate endDate);
 
     boolean existsByUser_Id(Long userId);
 
@@ -32,4 +34,3 @@ public interface ExpenseRepository extends JpaRepository<Expense, Long>, JpaSpec
     @Query("SELECT YEAR(e.date), MONTH(e.date), SUM(e.amount) FROM Expense e WHERE e.user.id = :userId GROUP BY YEAR(e.date), MONTH(e.date) ORDER BY YEAR(e.date) DESC, MONTH(e.date) DESC")
     List<Object[]> findMonthlySpendingByUserId(@Param("userId") Long userId);
 }
-

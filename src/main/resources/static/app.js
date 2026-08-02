@@ -23,6 +23,14 @@ const INITIAL_DEMO_EXPENSES = [
     { id: 105, amount: 1800, category: "HEALTH", date: new Date(Date.now() - 259200000).toISOString().slice(0, 10), note: "Pharmacy supplies" }
 ];
 
+const QUICK_TEMPLATE_DEFINITIONS = [
+    { templateKey: "bus", label: "Bus", category: "TRANSPORT", amount: 60, defaultNote: "Bus fare" },
+    { templateKey: "coffee", label: "Coffee", category: "FOOD", amount: 150, defaultNote: "Coffee" },
+    { templateKey: "lunch", label: "Lunch", category: "FOOD", amount: 250, defaultNote: "Lunch" },
+    { templateKey: "breakfast", label: "Breakfast", category: "FOOD", amount: 180, defaultNote: "Breakfast" },
+    { templateKey: "snack", label: "Snack", category: "FOOD", amount: 120, defaultNote: "Snack" }
+];
+
 const state = {
     token: localStorage.getItem(AUTH_TOKEN_KEY) || "",
     username: localStorage.getItem(USER_NAME_KEY) || "Alex",
@@ -39,6 +47,7 @@ const state = {
         first: true,
         last: true
     },
+    quickTemplates: [],
     noteDebounceTimer: null
 };
 
@@ -71,12 +80,15 @@ const expenseSubmit = document.getElementById("expense-submit");
 const cancelEditButton = document.getElementById("cancel-edit");
 const categoryGrid = document.getElementById("category-grid");
 const expenseCategoryInput = document.getElementById("expense-category");
+const templateChipList = document.getElementById("template-chip-list");
+const templateStatus = document.getElementById("template-status");
 
 const totalAmountEl = document.getElementById("total-amount");
 const totalExpensesEl = document.getElementById("total-expenses");
 const maxExpenseEl = document.getElementById("max-expense");
 const avgExpenseEl = document.getElementById("avg-expense");
 const categoryInsightsEl = document.getElementById("category-insights");
+const smartInsightsEl = document.getElementById("smart-insights");
 
 const filterCategory = document.getElementById("filter-category");
 const filterNote = document.getElementById("filter-note");
@@ -139,6 +151,145 @@ function fillCategoryFilterOptions() {
     ].join("");
 }
 
+function formatCategoryLabel(catKey) {
+    const mapVal = CATEGORY_MAP[catKey];
+    if (mapVal?.label) return mapVal.label;
+    return String(catKey || "Other")
+        .toLowerCase()
+        .replace(/_/g, " ")
+        .replace(/\b\w/g, (ch) => ch.toUpperCase());
+}
+
+function getQuickTemplatesPayload() {
+    return QUICK_TEMPLATE_DEFINITIONS.map((template) => ({ ...template }));
+}
+
+function buildWeeklyInsightsFromItems(items) {
+    const now = new Date();
+    const day = now.getDay();
+    const mondayOffset = day === 0 ? -6 : 1 - day;
+    const weekStartDate = new Date(now);
+    weekStartDate.setDate(now.getDate() + mondayOffset);
+    weekStartDate.setHours(0, 0, 0, 0);
+    const weekEndDate = new Date(weekStartDate);
+    weekEndDate.setDate(weekStartDate.getDate() + 6);
+
+    const startIso = weekStartDate.toISOString().slice(0, 10);
+    const endIso = weekEndDate.toISOString().slice(0, 10);
+
+    const weeklyItems = items.filter((item) => item.date >= startIso && item.date <= endIso);
+    const totalSpent = weeklyItems.reduce((sum, item) => sum + Number(item.amount || 0), 0);
+    const totalTransactions = weeklyItems.length;
+    const averageExpense = totalTransactions === 0 ? 0 : totalSpent / totalTransactions;
+
+    const totalsByCategory = weeklyItems.reduce((acc, item) => {
+        const key = item.category || "OTHER";
+        acc[key] = (acc[key] || 0) + Number(item.amount || 0);
+        return acc;
+    }, {});
+
+    const categoryBreakdown = Object.entries(totalsByCategory)
+        .map(([category, amount]) => ({
+            category,
+            amount,
+            percentage: totalSpent === 0 ? 0 : Math.round((amount * 10000) / totalSpent) / 100
+        }))
+        .sort((a, b) => b.amount - a.amount);
+
+    const top = categoryBreakdown[0];
+    const summary = top
+        ? `You spent ${formatINR(top.amount)} on ${formatCategoryLabel(top.category)} this week (${top.percentage}% of weekly spending).`
+        : "No expenses logged this week yet. Use Quick Templates to add daily expenses in one tap.";
+
+    return {
+        weekStartDate: startIso,
+        weekEndDate: endIso,
+        totalSpent,
+        totalTransactions,
+        averageExpense,
+        topCategory: top ? top.category : null,
+        topCategorySpent: top ? top.amount : 0,
+        categoryBreakdown,
+        summary
+    };
+}
+
+function renderQuickTemplates(templates) {
+    if (!templateChipList) return;
+    if (!Array.isArray(templates) || templates.length === 0) {
+        templateChipList.innerHTML = `<p class="muted">No templates available.</p>`;
+        return;
+    }
+
+    templateChipList.innerHTML = templates.map((template) => `
+        <button type="button" class="template-chip" data-template-key="${template.templateKey}">
+            ${template.label} · ${formatINR(template.amount)}
+        </button>
+    `).join("");
+}
+
+function renderSmartInsights(payload) {
+    if (!smartInsightsEl) return;
+    const breakdown = Array.isArray(payload?.categoryBreakdown) ? payload.categoryBreakdown.slice(0, 3) : [];
+    const summary = payload?.summary || "No insights available yet.";
+    const topCategoryLabel = payload?.topCategory ? formatCategoryLabel(payload.topCategory) : "-";
+
+    smartInsightsEl.innerHTML = `
+        <p class="insight-summary">${summary}</p>
+        <div class="smart-insight-metrics">
+            <span class="metric-pill"><strong>${formatINR(payload?.totalSpent || 0)}</strong><em>Total this week</em></span>
+            <span class="metric-pill"><strong>${payload?.totalTransactions || 0}</strong><em>Transactions</em></span>
+            <span class="metric-pill"><strong>${formatINR(payload?.averageExpense || 0)}</strong><em>Avg expense</em></span>
+            <span class="metric-pill"><strong>${topCategoryLabel}</strong><em>Top category</em></span>
+        </div>
+        <div class="smart-insight-top">
+            ${breakdown.map((item) => `
+                <div class="smart-row">
+                    <span>${formatCategoryLabel(item.category)}</span>
+                    <span>${formatINR(item.amount)} (${item.percentage}%)</span>
+                </div>
+            `).join("")}
+        </div>
+    `;
+}
+
+async function fetchQuickTemplates() {
+    try {
+        const templates = state.isDemo ? getQuickTemplatesPayload() : await apiRequest("/expenses/templates");
+        state.quickTemplates = Array.isArray(templates) ? templates : [];
+        renderQuickTemplates(state.quickTemplates);
+        if (templateStatus) templateStatus.textContent = "Tap any template to add an expense instantly.";
+    } catch (err) {
+        if (templateStatus) templateStatus.textContent = "Unable to load templates.";
+        setMessage(dashboardMessage, err.message, true);
+    }
+}
+
+async function applyQuickTemplate(templateKey) {
+    if (!templateKey) return;
+    try {
+        await apiRequest(`/expenses/templates/${encodeURIComponent(templateKey)}`, { method: "POST" });
+        await fetchExpenses(0);
+        setMessage(dashboardMessage, "Expense added from template.");
+    } catch (err) {
+        setMessage(dashboardMessage, err.message, true);
+    }
+}
+
+async function fetchWeeklyInsights() {
+    try {
+        const payload = state.isDemo
+            ? buildWeeklyInsightsFromItems(getDemoExpenses())
+            : await apiRequest("/expenses/insights/weekly");
+        renderSmartInsights(payload);
+    } catch (err) {
+        if (smartInsightsEl) {
+            smartInsightsEl.innerHTML = `<p class="muted">Could not load smart insights right now.</p>`;
+        }
+        setMessage(dashboardMessage, err.message, true);
+    }
+}
+
 // Local Storage Helper for Demo Mode
 function getDemoExpenses() {
     const stored = localStorage.getItem(DEMO_EXPENSES_KEY);
@@ -196,6 +347,32 @@ async function apiRequest(path, options = {}, allowUnauthorized = false) {
 function handleDemoRequest(path, options) {
     const method = options.method || "GET";
     let items = getDemoExpenses();
+
+    if (path === "/expenses/templates" && method === "GET") {
+        return Promise.resolve(getQuickTemplatesPayload());
+    }
+
+    if (path.startsWith("/expenses/templates/") && method === "POST") {
+        const templateKey = decodeURIComponent(path.split("/")[3] || "").toLowerCase();
+        const template = QUICK_TEMPLATE_DEFINITIONS.find((item) => item.templateKey === templateKey);
+        if (!template) {
+            return Promise.reject(new Error("Invalid template key."));
+        }
+        const newItem = {
+            id: Date.now(),
+            amount: template.amount,
+            category: template.category,
+            date: new Date().toISOString().slice(0, 10),
+            note: template.defaultNote
+        };
+        items.unshift(newItem);
+        saveDemoExpenses(items);
+        return Promise.resolve(newItem);
+    }
+
+    if (path === "/expenses/insights/weekly" && method === "GET") {
+        return Promise.resolve(buildWeeklyInsightsFromItems(items));
+    }
 
     if (path.startsWith("/expenses")) {
         if (method === "GET") {
@@ -403,11 +580,13 @@ function renderExpensesTable() {
                 <td>${expense.note || "-"}</td>
                 <td>
                     <div class="action-btn-group">
-                        <button type="button" class="btn-icon" data-action="edit" data-id="${expense.id}" title="Edit Expense">
+                        <button type="button" class="btn-icon" data-action="edit" data-id="${expense.id}" title="Edit Expense" aria-label="Edit expense">
                             <i data-lucide="edit-3" style="width:16px;height:16px;"></i>
+                            <span class="action-text">Edit</span>
                         </button>
-                        <button type="button" class="btn-icon danger" data-action="delete" data-id="${expense.id}" title="Delete Expense">
+                        <button type="button" class="btn-icon danger" data-action="delete" data-id="${expense.id}" title="Delete Expense" aria-label="Delete expense">
                             <i data-lucide="trash-2" style="width:16px;height:16px;"></i>
+                            <span class="action-text">Delete</span>
                         </button>
                     </div>
                 </td>
@@ -419,6 +598,7 @@ function renderExpensesTable() {
 }
 
 async function fetchExpenses(page = state.pagination.page) {
+    const requestedPage = Math.max(0, Number(page) || 0);
     const params = new URLSearchParams();
     const category = filterCategory ? filterCategory.value : "";
     const note = filterNote ? filterNote.value.trim() : "";
@@ -428,7 +608,7 @@ async function fetchExpenses(page = state.pagination.page) {
     if (note) params.set("note", note);
     params.set("sortBy", sortField || "date");
     params.set("direction", sortDirection || "desc");
-    params.set("page", String(page));
+    params.set("page", String(requestedPage));
     params.set("size", String(state.pagination.size));
 
     const payload = await apiRequest(`/expenses?${params.toString()}`);
@@ -442,10 +622,15 @@ async function fetchExpenses(page = state.pagination.page) {
         last: payload.last
     };
 
+    if (requestedPage > 0 && payload.totalElements > 0 && requestedPage >= payload.totalPages) {
+        return fetchExpenses(Math.max(0, payload.totalPages - 1));
+    }
+
     renderExpensesTable();
 
     const overviewItems = await fetchAllExpensesForOverview();
     updateBudgetRingAndOverview(overviewItems);
+    await fetchWeeklyInsights();
 }
 
 async function fetchAllExpensesForOverview() {
@@ -504,6 +689,15 @@ function setupQuickAddEvents() {
     });
 }
 
+function setupTemplateEvents() {
+    if (!templateChipList) return;
+    templateChipList.addEventListener("click", (e) => {
+        const btn = e.target.closest("[data-template-key]");
+        if (!btn) return;
+        applyQuickTemplate(btn.dataset.templateKey);
+    });
+}
+
 function setEditMode(expense) {
     state.editingId = expense.id;
     if (expenseFormTitle) expenseFormTitle.textContent = "✏️ Edit Expense";
@@ -535,6 +729,7 @@ function showDashboard() {
     if (authScreen) authScreen.classList.add("hidden");
     if (dashboardScreen) dashboardScreen.classList.remove("hidden");
     setGreeting();
+    fetchQuickTemplates();
     if (window.lucide) window.lucide.createIcons();
 }
 
@@ -625,6 +820,7 @@ document.addEventListener("DOMContentLoaded", () => {
     fillCategoryFilterOptions();
     resetExpenseForm();
     setupQuickAddEvents();
+    setupTemplateEvents();
     setupPasswordToggles();
     if (window.lucide) window.lucide.createIcons();
 
