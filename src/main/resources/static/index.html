@@ -132,10 +132,13 @@
                 <div class="budget-badge-pill" id="budget-edit-trigger" title="Click to change monthly budget">
                     <i data-lucide="target"></i>
                     <span>Budget: <strong id="header-budget-text">₹30,000</strong></span>
-                    <i data-lucide="edit-2" class="icon-sm"></i>
+                    <i data-lucide="edit-3" class="icon-sm"></i>
                 </div>
                 <button id="export-csv-button" class="btn btn-tertiary btn-icon-only" title="Export CSV" type="button">
                     <i data-lucide="download"></i>
+                </button>
+                <button id="export-pdf-button" class="btn btn-tertiary btn-icon-only" title="Print / Save PDF" type="button">
+                    <i data-lucide="file-text"></i>
                 </button>
                 <button id="logout-button" class="btn btn-secondary" type="button">
                     <i data-lucide="log-out"></i> Log out
@@ -232,7 +235,7 @@
                         </div>
 
                         <div class="template-block">
-                            <div class="category-grid-label">Quick Templates (1-tap)</div>
+                            <div class="template-heading"><div class="category-grid-label">Quick Templates (1-tap)</div><button id="show-favorites-button" type="button" class="text-button">Favorites only</button></div>
                             <div id="template-chip-list" class="template-chip-list"></div>
                             <p id="template-status" class="help-text"></p>
                         </div>
@@ -251,8 +254,10 @@
                         </div>
 
                         <label>Note / Description
-                            <input id="expense-note" type="text" maxlength="200" placeholder="e.g. Swiggy order, Petrol, Electricity bill">
+                            <input id="expense-note" type="text" maxlength="200" list="note-suggestions" placeholder="e.g. Swiggy order, Petrol, Electricity bill">
                         </label>
+                        <datalist id="note-suggestions"></datalist>
+                        <div id="smart-entry-suggestions" class="entry-suggestions"></div>
 
                         <div class="row-actions">
                             <button type="submit" class="btn btn-primary btn-grow" id="expense-submit">
@@ -300,6 +305,14 @@
                     </div>
                 </div>
 
+                <article class="panel analytics-panel">
+                    <div class="panel-header">
+                        <div><h3>Monthly spending trend</h3><p id="monthly-comparison" class="comparison-text">No previous month to compare yet</p></div>
+                        <span class="muted-tag">Last 6 months</span>
+                    </div>
+                    <div id="spending-trend-chart" class="trend-chart" role="img" aria-label="Monthly spending trend"></div>
+                </article>
+
                 <article class="panel smart-insights-panel">
                     <div class="panel-header">
                         <h3>Smart Suggestions</h3>
@@ -315,6 +328,11 @@
                         <span class="muted-tag">Spending Distribution</span>
                     </div>
                     <div id="category-insights" class="insight-bars-container"></div>
+                </article>
+
+                <article class="panel category-budget-panel">
+                    <div class="panel-header"><div><h3>Category budgets</h3><p class="muted-tag">Monthly limits for each category</p></div><button id="save-category-budgets" type="button" class="btn btn-tertiary btn-sm">Save limits</button></div>
+                    <div id="category-budgets" class="category-budget-list"></div>
                 </article>
 
                 <!-- Transactions History & Filters Table -->
@@ -337,6 +355,11 @@
                         </div>
                     </div>
                     <p id="filter-status" class="help-text"></p>
+
+                    <div id="empty-state" class="empty-state hidden">
+                        <div class="empty-icon">✨</div><h3>Your spending story starts here</h3><p>Add your first expense or tap a template to see budgets, trends and personalized suggestions.</p>
+                        <button id="empty-add-button" type="button" class="btn btn-primary">Add first expense</button>
+                    </div>
 
                     <div class="table-wrap">
                         <table>

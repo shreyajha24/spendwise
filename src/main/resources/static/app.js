@@ -1,8 +1,14 @@
 const AUTH_TOKEN_KEY = "spendwise_token";
 const USER_NAME_KEY = "spendwise_user_name";
 const BUDGET_KEY = "spendwise_budget";
+const CATEGORY_BUDGETS_KEY = "spendwise_category_budgets";
+const FAVORITES_KEY = "spendwise_favorite_templates";
 const DEMO_MODE_KEY = "spendwise_demo_mode";
 const DEMO_EXPENSES_KEY = "spendwise_demo_expenses";
+const API_BASE_OVERRIDE = (window.SPENDWISE_API_BASE || "").trim();
+const API_BASE_URL = API_BASE_OVERRIDE
+    ? API_BASE_OVERRIDE.replace(/\/+$/, "")
+    : (window.location.port && window.location.port !== "8080" ? "http://localhost:8080" : "");
 
 const CATEGORY_MAP = {
     FOOD: { emoji: "🍕", label: "Food", color: "#ef4444" },
@@ -48,7 +54,13 @@ const state = {
         last: true
     },
     quickTemplates: [],
-    noteDebounceTimer: null
+    noteDebounceTimer: null,
+    overviewItems: [],
+    categoryBudgets: JSON.parse(localStorage.getItem(CATEGORY_BUDGETS_KEY) || "{}"),
+    favorites: JSON.parse(localStorage.getItem(FAVORITES_KEY) || "[]"),
+    favoritesOnly: false,
+    lastAddedExpense: null,
+    undoTimer: null
 };
 
 // DOM Elements
@@ -108,6 +120,16 @@ const budgetInputVal = document.getElementById("budget-input-val");
 const saveBudgetBtn = document.getElementById("save-budget-btn");
 const closeBudgetBtn = document.getElementById("close-budget-btn");
 const exportCsvBtn = document.getElementById("export-csv-button");
+const exportPdfBtn = document.getElementById("export-pdf-button");
+const trendChartEl = document.getElementById("spending-trend-chart");
+const monthlyComparisonEl = document.getElementById("monthly-comparison");
+const categoryBudgetsEl = document.getElementById("category-budgets");
+const saveCategoryBudgetsBtn = document.getElementById("save-category-budgets");
+const noteSuggestionsEl = document.getElementById("note-suggestions");
+const entrySuggestionsEl = document.getElementById("smart-entry-suggestions");
+const emptyStateEl = document.getElementById("empty-state");
+const emptyAddButton = document.getElementById("empty-add-button");
+const showFavoritesButton = document.getElementById("show-favorites-button");
 
 function setMessage(element, text, isError = false) {
     if (!element) return;
@@ -228,6 +250,21 @@ function renderQuickTemplates(templates) {
     `).join("");
 }
 
+function renderQuickTemplates(templates) {
+    if (!templateChipList) return;
+    if (!Array.isArray(templates) || templates.length === 0) {
+        templateChipList.innerHTML = `<p class="muted">No templates available.</p>`;
+        return;
+    }
+    const visible = state.favoritesOnly ? templates.filter(t => state.favorites.includes(t.templateKey)) : templates;
+    templateChipList.innerHTML = visible.map((template) => `
+        <button type="button" class="template-chip" data-template-key="${template.templateKey}">${template.label} · ${formatINR(template.amount)}</button>
+        <button type="button" class="favorite-template ${state.favorites.includes(template.templateKey) ? "is-favorite" : ""}" data-favorite-key="${template.templateKey}" aria-label="Favorite ${template.label}">★</button>
+    `).join("");
+    if (!visible.length) templateChipList.innerHTML = `<p class="muted">No favorite templates yet. Tap a star to save one.</p>`;
+    if (showFavoritesButton) showFavoritesButton.textContent = state.favoritesOnly ? "Show all" : "Favorites only";
+}
+
 function renderSmartInsights(payload) {
     if (!smartInsightsEl) return;
     const breakdown = Array.isArray(payload?.categoryBreakdown) ? payload.categoryBreakdown.slice(0, 3) : [];
@@ -268,9 +305,9 @@ async function fetchQuickTemplates() {
 async function applyQuickTemplate(templateKey) {
     if (!templateKey) return;
     try {
-        await apiRequest(`/expenses/templates/${encodeURIComponent(templateKey)}`, { method: "POST" });
+        const created = await apiRequest(`/expenses/templates/${encodeURIComponent(templateKey)}`, { method: "POST" });
         await fetchExpenses(0);
-        setMessage(dashboardMessage, "Expense added from template.");
+        showUndo(created, "Template expense added.");
     } catch (err) {
         setMessage(dashboardMessage, err.message, true);
     }
@@ -314,13 +351,19 @@ async function apiRequest(path, options = {}, allowUnauthorized = false) {
         return handleDemoRequest(path, options);
     }
 
+    const isAbsoluteUrl = /^https?:\/\//i.test(path);
+    const resolvedPath = isAbsoluteUrl ? path : (path.startsWith("/") ? path : `/${path}`);
+    const requestUrl = isAbsoluteUrl
+        ? path
+        : (API_BASE_URL ? `${API_BASE_URL}${resolvedPath}` : resolvedPath);
+
     const headers = { "Content-Type": "application/json", ...(options.headers || {}) };
     if (state.token) {
         headers.Authorization = `Bearer ${state.token}`;
     }
 
     try {
-        const response = await fetch(path, { ...options, headers });
+        const response = await fetch(requestUrl, { ...options, headers });
         if (response.status === 401 && !allowUnauthorized) {
             logout();
             throw new Error("Session expired. Please log in again.");
@@ -545,6 +588,66 @@ function renderCategoryBreakdown(items, totalSpent) {
     }).join("");
 }
 
+function monthKey(date) { return String(date || "").slice(0, 7); }
+
+function renderTrendAndComparison(items) {
+    if (!trendChartEl || !monthlyComparisonEl) return;
+    const now = new Date();
+    const keys = Array.from({ length: 6 }, (_, index) => {
+        const d = new Date(now.getFullYear(), now.getMonth() - (5 - index), 1);
+        return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+    });
+    const totals = Object.fromEntries(keys.map(key => [key, 0]));
+    items.forEach(item => { const key = monthKey(item.date); if (key in totals) totals[key] += Number(item.amount || 0); });
+    const max = Math.max(...Object.values(totals), 1);
+    trendChartEl.innerHTML = keys.map(key => {
+        const date = new Date(`${key}-01T00:00:00`);
+        const amount = totals[key];
+        return `<div class="trend-bar-wrap" title="${date.toLocaleString("en-IN", { month: "long", year: "numeric" })}: ${formatINR(amount)}"><span class="trend-value">${amount ? formatINR(amount) : ""}</span><div class="trend-bar" style="height:${Math.max(5, Math.round(amount / max * 100))}%"></div><span>${date.toLocaleString("en-IN", { month: "short" })}</span></div>`;
+    }).join("");
+    const current = totals[keys[5]], previous = totals[keys[4]];
+    if (!previous) monthlyComparisonEl.textContent = current ? "No spend recorded last month" : "Add an expense to start your trend";
+    else {
+        const change = Math.round(((current - previous) / previous) * 100);
+        monthlyComparisonEl.textContent = `${change >= 0 ? "↑" : "↓"}${Math.abs(change)}% vs last month`;
+        monthlyComparisonEl.className = `comparison-text ${change > 0 ? "up" : "down"}`;
+    }
+}
+
+function renderCategoryBudgets(items) {
+    if (!categoryBudgetsEl) return;
+    const currentKey = monthKey(new Date().toISOString());
+    const totals = items.filter(item => monthKey(item.date) === currentKey).reduce((acc, item) => {
+        acc[item.category] = (acc[item.category] || 0) + Number(item.amount || 0); return acc;
+    }, {});
+    categoryBudgetsEl.innerHTML = Object.entries(CATEGORY_MAP).map(([key, cat]) => {
+        const limit = Number(state.categoryBudgets[key] || 0), spent = totals[key] || 0;
+        const pct = limit ? Math.min(100, Math.round(spent / limit * 100)) : 0;
+        return `<div class="category-budget-row"><span>${cat.emoji} ${cat.label}</span><div class="category-budget-control"><input type="number" min="0" step="100" data-category-budget="${key}" value="${limit || ""}" placeholder="No limit" aria-label="${cat.label} budget"><small>${formatINR(spent)} spent${limit ? ` · ${pct}%` : ""}</small></div></div>`;
+    }).join("");
+}
+
+function renderEntrySuggestions(items) {
+    if (!noteSuggestionsEl || !entrySuggestionsEl) return;
+    const uniqueNotes = [...new Set(items.map(i => (i.note || "").trim()).filter(Boolean))].slice(0, 8);
+    noteSuggestionsEl.innerHTML = uniqueNotes.map(note => `<option value="${note.replace(/"/g, "&quot;")}"></option>`).join("");
+    const category = state.selectedCategory;
+    const recent = items.filter(i => i.category === category && i.note).slice(0, 3);
+    entrySuggestionsEl.innerHTML = recent.length ? `Suggestions: ${recent.map(i => `<button type="button" data-note-suggestion="${(i.note || "").replace(/"/g, "&quot;")}">${i.note}</button>`).join("")}` : "";
+}
+
+function showUndo(expense, message) {
+    if (!expense?.id) { setMessage(dashboardMessage, message); return; }
+    state.lastAddedExpense = expense;
+    clearTimeout(state.undoTimer);
+    dashboardMessage.innerHTML = `${message} <button type="button" class="undo-button" id="undo-add-button">Undo</button>`;
+    state.undoTimer = setTimeout(() => setMessage(dashboardMessage, ""), 10000);
+    document.getElementById("undo-add-button")?.addEventListener("click", async () => {
+        try { await apiRequest(`/expenses/${expense.id}`, { method: "DELETE" }); await fetchExpenses(0); setMessage(dashboardMessage, "Expense removed."); }
+        catch (err) { setMessage(dashboardMessage, err.message, true); }
+    }, { once: true });
+}
+
 // Transactions Table Rendering
 function renderExpensesTable() {
     const items = state.expenses;
@@ -629,7 +732,12 @@ async function fetchExpenses(page = state.pagination.page) {
     renderExpensesTable();
 
     const overviewItems = await fetchAllExpensesForOverview();
+    state.overviewItems = overviewItems;
     updateBudgetRingAndOverview(overviewItems);
+    renderTrendAndComparison(overviewItems);
+    renderCategoryBudgets(overviewItems);
+    renderEntrySuggestions(overviewItems);
+    if (emptyStateEl) emptyStateEl.classList.toggle("hidden", overviewItems.length !== 0);
     await fetchWeeklyInsights();
 }
 
@@ -665,6 +773,20 @@ function selectCategory(catKey) {
         const isMatch = btn.dataset.cat === catKey;
         btn.classList.toggle("active", isMatch);
     });
+    renderEntrySuggestions(state.overviewItems);
+}
+
+function suggestCategoryFromNote(note) {
+    const value = String(note || "").toLowerCase();
+    const rules = {
+        FOOD: ["food", "lunch", "dinner", "coffee", "swiggy", "zomato", "restaurant", "grocery"],
+        TRANSPORT: ["uber", "ola", "metro", "bus", "petrol", "fuel", "cab"],
+        BILLS: ["electricity", "internet", "recharge", "bill", "wifi"],
+        SHOPPING: ["amazon", "clothes", "shoes", "shopping"],
+        HEALTH: ["doctor", "pharmacy", "medicine", "gym"]
+    };
+    const match = Object.entries(rules).find(([, words]) => words.some(word => value.includes(word)));
+    if (match) selectCategory(match[0]);
 }
 
 function setupQuickAddEvents() {
@@ -692,6 +814,14 @@ function setupQuickAddEvents() {
 function setupTemplateEvents() {
     if (!templateChipList) return;
     templateChipList.addEventListener("click", (e) => {
+        const favorite = e.target.closest("[data-favorite-key]");
+        if (favorite) {
+            const key = favorite.dataset.favoriteKey;
+            state.favorites = state.favorites.includes(key) ? state.favorites.filter(k => k !== key) : [...state.favorites, key];
+            localStorage.setItem(FAVORITES_KEY, JSON.stringify(state.favorites));
+            renderQuickTemplates(state.quickTemplates);
+            return;
+        }
         const btn = e.target.closest("[data-template-key]");
         if (!btn) return;
         applyQuickTemplate(btn.dataset.templateKey);
@@ -906,10 +1036,11 @@ document.addEventListener("DOMContentLoaded", () => {
             const method = isEdit ? "PUT" : "POST";
 
             try {
-                await apiRequest(path, { method, body: JSON.stringify({ amount, category, date, note }) });
+                const saved = await apiRequest(path, { method, body: JSON.stringify({ amount, category, date, note }) });
                 resetExpenseForm();
                 await fetchExpenses(0);
-                setMessage(dashboardMessage, isEdit ? "Expense updated successfully." : "Expense added successfully!");
+                if (isEdit) setMessage(dashboardMessage, "Expense updated successfully.");
+                else showUndo(saved, "Expense added successfully.");
             } catch (err) {
                 setMessage(dashboardMessage, err.message, true);
             }
@@ -919,6 +1050,19 @@ document.addEventListener("DOMContentLoaded", () => {
     if (cancelEditButton) cancelEditButton.addEventListener("click", resetExpenseForm);
     if (logoutButton) logoutButton.addEventListener("click", logout);
     if (exportCsvBtn) exportCsvBtn.addEventListener("click", exportToCSV);
+    if (exportPdfBtn) exportPdfBtn.addEventListener("click", () => window.print());
+    if (showFavoritesButton) showFavoritesButton.addEventListener("click", () => { state.favoritesOnly = !state.favoritesOnly; renderQuickTemplates(state.quickTemplates); });
+    if (saveCategoryBudgetsBtn) saveCategoryBudgetsBtn.addEventListener("click", () => {
+        document.querySelectorAll("[data-category-budget]").forEach(input => { state.categoryBudgets[input.dataset.categoryBudget] = Math.max(0, Number(input.value || 0)); });
+        localStorage.setItem(CATEGORY_BUDGETS_KEY, JSON.stringify(state.categoryBudgets));
+        renderCategoryBudgets(state.overviewItems);
+        setMessage(dashboardMessage, "Category budgets saved.");
+    });
+    if (emptyAddButton) emptyAddButton.addEventListener("click", () => document.getElementById("expense-amount")?.focus());
+    if (entrySuggestionsEl) entrySuggestionsEl.addEventListener("click", e => {
+        const button = e.target.closest("[data-note-suggestion]");
+        if (button) document.getElementById("expense-note").value = button.dataset.noteSuggestion;
+    });
 
     // Filters & Pagination
     if (resetFilters) {
@@ -943,6 +1087,8 @@ document.addEventListener("DOMContentLoaded", () => {
             state.noteDebounceTimer = setTimeout(() => fetchExpenses(0), 250);
         });
     }
+
+    document.getElementById("expense-note")?.addEventListener("input", (e) => suggestCategoryFromNote(e.target.value));
 
     if (prevPageButton) {
         prevPageButton.addEventListener("click", () => {
