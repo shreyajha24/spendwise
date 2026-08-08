@@ -20,6 +20,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.text.NumberFormat;
 import java.time.DayOfWeek;
@@ -52,7 +53,7 @@ public class ExpenseService {
         this.expenseMapper = expenseMapper;
         this.currentUserService = currentUserService;
     }
-
+    @Transactional
     public ExpenseResponse createExpense(ExpenseRequest request) {
         User currentUser = currentUserService.getCurrentUser();
         Expense expense = expenseMapper.toEntity(request);
@@ -72,7 +73,7 @@ public class ExpenseService {
                 ))
                 .toList();
     }
-
+    @Transactional
     public ExpenseResponse createExpenseFromTemplate(String templateKey, LocalDate date) {
         User currentUser = currentUserService.getCurrentUser();
         QuickTemplateDefinition definition = resolveTemplate(templateKey);
@@ -92,7 +93,7 @@ public class ExpenseService {
         Expense savedExpense = expenseRepository.save(expense);
         return expenseMapper.toResponse(savedExpense);
     }
-
+    @Transactional(readOnly = true)
     public WeeklyInsightResponse getWeeklyInsights() {
         User currentUser = currentUserService.getCurrentUser();
         LocalDate weekStart = LocalDate.now().with(DayOfWeek.MONDAY);
@@ -147,7 +148,7 @@ public class ExpenseService {
                 summary
         );
     }
-
+    @Transactional(readOnly = true)
     public ExpensePageResponse getExpenses(ExpenseFilterRequest filterRequest) {
         validatePagination(filterRequest.getPage(), filterRequest.getSize());
         User currentUser = currentUserService.getCurrentUser();
@@ -175,12 +176,12 @@ public class ExpenseService {
                 expensePage.isLast()
         );
     }
-
+    @Transactional(readOnly = true)
     public ExpenseResponse getExpenseById(Long id) {
         Long currentUserId = currentUserService.getCurrentUser().getId();
         return expenseMapper.toResponse(findExpenseById(id, currentUserId));
     }
-
+    @Transactional
     public ExpenseResponse updateExpense(Long id, ExpenseRequest request) {
         Long currentUserId = currentUserService.getCurrentUser().getId();
         Expense expense = findExpenseById(id, currentUserId);
@@ -188,7 +189,7 @@ public class ExpenseService {
         Expense updatedExpense = expenseRepository.save(expense);
         return expenseMapper.toResponse(updatedExpense);
     }
-
+    @Transactional
     public void deleteExpense(Long id) {
         Long currentUserId = currentUserService.getCurrentUser().getId();
         Expense expense = findExpenseById(id, currentUserId);
