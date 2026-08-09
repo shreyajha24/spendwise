@@ -8,6 +8,11 @@ import com.shreya.spendwise.dto.QuickExpenseTemplateResponse;
 import com.shreya.spendwise.dto.WeeklyInsightResponse;
 import com.shreya.spendwise.entity.Category;
 import com.shreya.spendwise.service.ExpenseService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
@@ -21,6 +26,8 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/expenses")
+@Tag(name = "Expenses", description = "Expense management endpoints for the authenticated user")
+@SecurityRequirement(name = "bearer-key")
 public class ExpenseController {
 
     private final ExpenseService expenseService;
@@ -46,22 +53,67 @@ public class ExpenseController {
             }
         });
     }
-
+    @Operation(
+            summary = "Get expense by ID",
+            description = "Retrieves a specific expense belonging to the authenticated user."
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Expense retrieved successfully"
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "Authentication required"
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "Expense not found"
+            )
+    })
     @GetMapping("/{id}")
     public ResponseEntity<ExpenseResponse> getExpenseById(@PathVariable Long id) {
         return ResponseEntity.ok(expenseService.getExpenseById(id));
     }
 
+    @Operation(summary = "List expenses", description = "Returns a paginated list of expenses belonging to the authenticated user.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Expenses retrieved successfully"),
+            @ApiResponse(responseCode = "400", description = "Invalid filter or pagination parameter"),
+            @ApiResponse(responseCode = "401", description = "Authentication required")
+    })
     @GetMapping
     public ResponseEntity<ExpensePageResponse> getExpenses(@ModelAttribute ExpenseFilterRequest filterRequest) {
         return ResponseEntity.ok(expenseService.getExpenses(filterRequest));
     }
 
+    @Operation(summary = "List quick expense templates", description = "Returns the available templates for creating expenses quickly.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Templates retrieved successfully"),
+            @ApiResponse(responseCode = "401", description = "Authentication required")
+    })
     @GetMapping("/templates")
     public ResponseEntity<List<QuickExpenseTemplateResponse>> getQuickExpenseTemplates() {
         return ResponseEntity.ok(expenseService.getQuickExpenseTemplates());
     }
-
+    @Operation(
+            summary = "Create an expense from a template",
+            description = "Creates an expense for the currently authenticated user using a quick expense template."
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "201",
+                    description = "Expense created successfully"
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Invalid template key or date"
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "Authentication required"
+            )
+    })
     @PostMapping("/templates/{templateKey}")
     public ResponseEntity<ExpenseResponse> createExpenseFromTemplate(
             @PathVariable String templateKey,
@@ -70,11 +122,22 @@ public class ExpenseController {
                 .body(expenseService.createExpenseFromTemplate(templateKey, date));
     }
 
+    @Operation(summary = "Get weekly spending insights", description = "Returns weekly spending insights for the authenticated user.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Weekly insights retrieved successfully"),
+            @ApiResponse(responseCode = "401", description = "Authentication required")
+    })
     @GetMapping("/insights/weekly")
     public ResponseEntity<WeeklyInsightResponse> getWeeklyInsights() {
         return ResponseEntity.ok(expenseService.getWeeklyInsights());
     }
 
+    @Operation(summary = "Create an expense", description = "Creates an expense for the authenticated user.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "201", description = "Expense created successfully"),
+            @ApiResponse(responseCode = "400", description = "Invalid expense data"),
+            @ApiResponse(responseCode = "401", description = "Authentication required")
+    })
     @PostMapping
     public ResponseEntity<ExpenseResponse> addExpense(
             @Valid @RequestBody ExpenseRequest request) {
@@ -82,6 +145,13 @@ public class ExpenseController {
                 .body(expenseService.createExpense(request));
     }
 
+    @Operation(summary = "Update an expense", description = "Updates an expense belonging to the authenticated user.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Expense updated successfully"),
+            @ApiResponse(responseCode = "400", description = "Invalid expense data"),
+            @ApiResponse(responseCode = "401", description = "Authentication required"),
+            @ApiResponse(responseCode = "404", description = "Expense not found")
+    })
     @PutMapping("/{id}")
     public ResponseEntity<ExpenseResponse> updateExpense(
             @PathVariable Long id,
@@ -89,6 +159,12 @@ public class ExpenseController {
         return ResponseEntity.ok(expenseService.updateExpense(id, request));
     }
 
+    @Operation(summary = "Delete an expense", description = "Deletes an expense belonging to the authenticated user.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "204", description = "Expense deleted successfully"),
+            @ApiResponse(responseCode = "401", description = "Authentication required"),
+            @ApiResponse(responseCode = "404", description = "Expense not found")
+    })
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteExpense(@PathVariable Long id) {
         expenseService.deleteExpense(id);
