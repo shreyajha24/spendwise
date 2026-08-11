@@ -7,8 +7,13 @@ import com.shreya.spendwise.dto.ExpenseResponse;
 import com.shreya.spendwise.dto.QuickExpenseTemplateResponse;
 import com.shreya.spendwise.dto.WeeklyInsightResponse;
 import com.shreya.spendwise.entity.Category;
+import com.shreya.spendwise.exception.ErrorResponse;
+import com.shreya.spendwise.exception.ValidationErrorResponse;
 import com.shreya.spendwise.service.ExpenseService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -60,15 +65,27 @@ public class ExpenseController {
     @ApiResponses({
             @ApiResponse(
                     responseCode = "200",
-                    description = "Expense retrieved successfully"
+                    description = "Expense retrieved successfully",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ExpenseResponse.class)
+                    )
             ),
             @ApiResponse(
                     responseCode = "401",
-                    description = "Authentication required"
+                    description = "Authentication required",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ErrorResponse.class)
+                    )
             ),
             @ApiResponse(
                     responseCode = "404",
-                    description = "Expense not found"
+                    description = "Expense not found",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ErrorResponse.class)
+                    )
             )
     })
     @GetMapping("/{id}")
@@ -78,9 +95,9 @@ public class ExpenseController {
 
     @Operation(summary = "List expenses", description = "Returns a paginated list of expenses belonging to the authenticated user.")
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Expenses retrieved successfully"),
-            @ApiResponse(responseCode = "400", description = "Invalid filter or pagination parameter"),
-            @ApiResponse(responseCode = "401", description = "Authentication required")
+            @ApiResponse(responseCode = "200", description = "Expenses retrieved successfully", content = @Content(schema = @Schema(implementation = ExpensePageResponse.class))),
+            @ApiResponse(responseCode = "400", description = "Invalid filter or pagination parameter", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "401", description = "Authentication required", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     @GetMapping
     public ResponseEntity<ExpensePageResponse> getExpenses(@ModelAttribute ExpenseFilterRequest filterRequest) {
@@ -89,8 +106,8 @@ public class ExpenseController {
 
     @Operation(summary = "List quick expense templates", description = "Returns the available templates for creating expenses quickly.")
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Templates retrieved successfully"),
-            @ApiResponse(responseCode = "401", description = "Authentication required")
+            @ApiResponse(responseCode = "200", description = "Templates retrieved successfully", content = @Content(array = @ArraySchema(schema = @Schema(implementation = QuickExpenseTemplateResponse.class)))),
+            @ApiResponse(responseCode = "401", description = "Authentication required", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     @GetMapping("/templates")
     public ResponseEntity<List<QuickExpenseTemplateResponse>> getQuickExpenseTemplates() {
@@ -103,15 +120,27 @@ public class ExpenseController {
     @ApiResponses({
             @ApiResponse(
                     responseCode = "201",
-                    description = "Expense created successfully"
+                    description = "Expense created successfully",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ExpenseResponse.class)
+                    )
             ),
             @ApiResponse(
                     responseCode = "400",
-                    description = "Invalid template key or date"
+                    description = "Invalid expense data",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ErrorResponse.class)
+                    )
             ),
             @ApiResponse(
                     responseCode = "401",
-                    description = "Authentication required"
+                    description = "Authentication required",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ErrorResponse.class)
+                    )
             )
     })
     @PostMapping("/templates/{templateKey}")
@@ -124,8 +153,8 @@ public class ExpenseController {
 
     @Operation(summary = "Get weekly spending insights", description = "Returns weekly spending insights for the authenticated user.")
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Weekly insights retrieved successfully"),
-            @ApiResponse(responseCode = "401", description = "Authentication required")
+            @ApiResponse(responseCode = "200", description = "Weekly insights retrieved successfully", content = @Content(schema = @Schema(implementation = WeeklyInsightResponse.class))),
+            @ApiResponse(responseCode = "401", description = "Authentication required", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     @GetMapping("/insights/weekly")
     public ResponseEntity<WeeklyInsightResponse> getWeeklyInsights() {
@@ -134,9 +163,16 @@ public class ExpenseController {
 
     @Operation(summary = "Create an expense", description = "Creates an expense for the authenticated user.")
     @ApiResponses({
-            @ApiResponse(responseCode = "201", description = "Expense created successfully"),
-            @ApiResponse(responseCode = "400", description = "Invalid expense data"),
-            @ApiResponse(responseCode = "401", description = "Authentication required")
+            @ApiResponse(responseCode = "201", description = "Expense created successfully", content = @Content(schema = @Schema(implementation = ExpenseResponse.class))),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Invalid request data",
+                    content = @Content(schema = @Schema(oneOf = {
+                            ValidationErrorResponse.class,
+                            ErrorResponse.class
+                    }))
+            ),
+            @ApiResponse(responseCode = "401", description = "Authentication required", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     @PostMapping
     public ResponseEntity<ExpenseResponse> addExpense(
@@ -147,10 +183,17 @@ public class ExpenseController {
 
     @Operation(summary = "Update an expense", description = "Updates an expense belonging to the authenticated user.")
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Expense updated successfully"),
-            @ApiResponse(responseCode = "400", description = "Invalid expense data"),
-            @ApiResponse(responseCode = "401", description = "Authentication required"),
-            @ApiResponse(responseCode = "404", description = "Expense not found")
+            @ApiResponse(responseCode = "200", description = "Expense updated successfully", content = @Content(schema = @Schema(implementation = ExpenseResponse.class))),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Invalid request data",
+                    content = @Content(schema = @Schema(oneOf = {
+                            ValidationErrorResponse.class,
+                            ErrorResponse.class
+                    }))
+            ),
+            @ApiResponse(responseCode = "401", description = "Authentication required", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "404", description = "Expense not found", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     @PutMapping("/{id}")
     public ResponseEntity<ExpenseResponse> updateExpense(
@@ -162,8 +205,8 @@ public class ExpenseController {
     @Operation(summary = "Delete an expense", description = "Deletes an expense belonging to the authenticated user.")
     @ApiResponses({
             @ApiResponse(responseCode = "204", description = "Expense deleted successfully"),
-            @ApiResponse(responseCode = "401", description = "Authentication required"),
-            @ApiResponse(responseCode = "404", description = "Expense not found")
+            @ApiResponse(responseCode = "401", description = "Authentication required", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "404", description = "Expense not found", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteExpense(@PathVariable Long id) {
