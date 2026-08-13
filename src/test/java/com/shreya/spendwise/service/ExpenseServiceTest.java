@@ -8,6 +8,7 @@ import com.shreya.spendwise.dto.WeeklyInsightResponse;
 import com.shreya.spendwise.entity.Category;
 import com.shreya.spendwise.entity.Expense;
 import com.shreya.spendwise.entity.User;
+import com.shreya.spendwise.exception.ExpenseNotFoundException;
 import com.shreya.spendwise.mapper.ExpenseMapper;
 import com.shreya.spendwise.repository.ExpenseRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -23,6 +24,7 @@ import org.springframework.data.jpa.domain.Specification;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -144,5 +146,36 @@ class ExpenseServiceTest {
         assertEquals(Category.FOOD, insight.getTopCategory());
         assertNotNull(insight.getSummary());
         assertFalse(insight.getCategoryBreakdown().isEmpty());
+    }
+
+    @Test
+    void shouldGetExpenseById() {
+        when(currentUserService.getCurrentUser()).thenReturn(testUser);
+        Expense expense = new Expense();
+        expense.setId(25L);
+        expense.setAmount(100.0);
+        expense.setUser(testUser);
+
+        when(expenseRepository.findByIdAndUser_Id(25L, testUser.getId()))
+                .thenReturn(Optional.of(expense));
+        when(expenseMapper.toResponse(expense))
+                .thenReturn(new ExpenseResponse(25L, 100.0, Category.FOOD, LocalDate.now(), "Test"));
+
+        ExpenseResponse result = expenseService.getExpenseById(25L);
+
+        assertNotNull(result);
+        assertEquals(25L, result.getId());
+        assertEquals(100.0, result.getAmount());
+        verify(expenseRepository, times(1)).findByIdAndUser_Id(25L, testUser.getId());
+    }
+
+    @Test
+    void shouldThrowExceptionWhenExpenseNotFound() {
+        when(currentUserService.getCurrentUser()).thenReturn(testUser);
+        when(expenseRepository.findByIdAndUser_Id(99L, testUser.getId()))
+                .thenReturn(Optional.empty());
+
+        assertThrows(ExpenseNotFoundException.class, () -> expenseService.getExpenseById(99L));
+        verify(expenseRepository, times(1)).findByIdAndUser_Id(99L, testUser.getId());
     }
 }
